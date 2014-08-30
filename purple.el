@@ -66,11 +66,4 @@
 		(arguments arguments))
     (lambda (&rest more) (apply function (append arguments more)))))
 
-;; Test area
-(purple-call-method "PurpleStatusGetId"
-		    :int32 (purple-call-method "PurplePresenceGetActiveStatus"
-					       :int32 (purple-call-method "PurpleBuddyGetPresence" :int32 12080)))
-
-(purple-call-method "PurplePrimitiveGetTypeFromId" "13286")
-
 (provide 'purple)
