@@ -49,8 +49,8 @@
   :group 'purple-buddy)
 
 (defcustom purple-buddy-indirect-props
-  '((presence		.	(active-status . "PurplePresenceGetActiveStatus"))
-    (active-status	.	(status . "PurpleStatusGetId")))
+  '((presence		.	(active-status 	. "PurplePresenceGetActiveStatus"))
+    (active-status	.	(status 	. "PurpleStatusGetId")))
   "List of indirected buddy properties method."
   :group 'purple-buddy)
 
@@ -148,6 +148,7 @@
 	  ((identity (nth 1 purple-buddy-faces))))))
 
 (defun purple-buddies-list ()
+  "Display a list of all buddies"
   (interactive)
   (with-current-buffer (get-buffer-create purple-buddies-buffer-name)
     (let ((inhibit-read-only t))
@@ -171,6 +172,9 @@
 			 (position (get-text-property 0 'face y) purple-buddy-faces)))))
 
 (defun purple-buddy-completing-read (&optional prompt)
+  "Read a string in the minibuffer with ido-style completion to
+select a buddy.
+PROMPT is a string to prompt with."
   (interactive)
   (let ((prompt (or prompt "Buddy: ")))
     (if (eq major-mode 'purple-buddies-mode)
