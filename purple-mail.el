@@ -21,11 +21,26 @@
 
 (require 'purple-buddy)
 
+(defun purple-mail-from-buddy (prompt)
+  (let ((buddy (purple-buddy-completing-read prompt)))
+    (format "\"%s\" <%s>"
+	    (slot-value buddy 'alias)
+	    (substring (slot-value buddy 'name) 4))))
+
+(defun purple-mail-insert-buddy (prompt &optional separator)
+  (insert (or separator "")
+	  (purple-mail-from-buddy prompt)))
+
 (defun purple-mail-to ()
   (interactive)
-  (let ((buddy (purple-buddy-select-buddy)))
-    (insert (format "\"%s\" <%s>"
-		    (slot-value buddy 'alias)
-		    (substring (slot-value buddy 'name) 4)))))
+  (if (not (eq major-mode 'message-mode))
+      (message-mail (purple-mail-from-buddy "Write email to: "))
+    (save-excursion
+      (message-goto-to)
+      (if (looking-back "To: ")
+	  (purple-mail-insert-buddy "Write email to: ")
+	(message-goto-cc)
+	(let ((separator (if (looking-back "Cc: ") "" ", ")))
+	  (purple-mail-insert-buddy "CC email to: " separator))))))
 
 (provide 'purple-mail)
