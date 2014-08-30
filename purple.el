@@ -66,4 +66,9 @@
 		(arguments arguments))
     (lambda (&rest more) (apply function (append arguments more)))))
 
+(defsubst rcurry (function &rest arguments)
+  (lexical-let ((function function)
+		(arguments arguments))
+    (lambda (&rest more) (apply function (append more arguments)))))
+
 (provide 'purple)
