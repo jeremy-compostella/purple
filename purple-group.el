@@ -19,8 +19,6 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-(require 'purple)
-
 (defgroup purple-group nil
   "Activity management group"
   :group 'purple)
@@ -53,7 +51,8 @@
 
 (defun purple-group-retreive-info (node type)
   (when (= 0 type)
-    (let ((group (purple-group node 'node node)))
+    (let ((group (or (purple-group-find 'node node)
+		     (purple-group node 'node node))))
       (add-to-list 'purple-groups group t 'purple-group-eq)
       (purple-call-method-async "PurpleGroupGetName"
 				(curry 'set-slot-value group 'name)

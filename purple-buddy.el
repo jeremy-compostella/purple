@@ -19,7 +19,6 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-(require 'purple)
 (require 'purple-group)
 (require 'eieio)
 (require 'cl)
@@ -31,7 +30,7 @@
 (defvar purple-buddies '())
 (defvar purple-buddy-history '())
 
-(defclass buddy ()
+(defclass purple-buddy ()
   ((id :type number :initarg id)
    (name :initarg name :initform "")
    (alias :initarg alias :initform "")
@@ -110,11 +109,10 @@
 
 (defun purple-buddy-retreive-all-info (id)
   (let ((buddy (or (purple-buddy-find 'id id)
-		   (buddy id 'id id))))
+		   (purple-buddy id 'id id))))
     (add-to-list 'purple-buddies buddy t 'purple-buddy-eq)
     (dolist (prop purple-buddy-props)
-      (purple-buddy-retreive-info buddy (car prop) (cdr prop)
-				  :int32 (oref buddy id)))))
+      (purple-buddy-retreive-info buddy (car prop) (cdr prop) :int32 id))))
 
 ;; Signals
 (defun purple-buddy-added-handler (id)
@@ -177,7 +175,7 @@
       (tabulated-list-print)
       (pop-to-buffer-same-window (current-buffer)))))
 
-(defsubst purple-buddy-propertize (buddy)
+(defun purple-buddy-propertize (buddy)
   (propertize (slot-value buddy 'alias) 'face (purple-buddy-face buddy)))
 
 (defun purple-buddy-fancy-list ()
