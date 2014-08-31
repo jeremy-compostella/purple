@@ -25,9 +25,21 @@
 (require 'purple-chat)
 (require 'purple-mail)
 
-(defconst purple-dbus-service "im.pidgin.purple.PurpleService")
-(defconst purple-object "/im/pidgin/purple/PurpleObject")
-(defconst purple-interface "im.pidgin.purple.PurpleInterface")
+(defgroup purple nil
+  "Activity management group"
+  :group 'applications)
+
+(defcustom purple-dbus-service "im.pidgin.purple.PurpleService"
+  "Purple dbus service name. Default value is for pidgin."
+  :group 'purple)
+
+(defcustom purple-object "/im/pidgin/purple/PurpleObject"
+  "Purple object name. Default value is for pidgin."
+  :group 'purple)
+
+(defcustom purple-interface "im.pidgin.purple.PurpleInterface"
+  "Purple interface name. Default value is for pidgin."
+  :group 'purple)
 
 (defvar purple-accounts '())
 
@@ -51,6 +63,7 @@
 
 ;; Init
 (defun purple-init ()
+  "Initialize purple for Emacs."
   (interactive)
   (setq purple-accounts (purple-account-list))
   (unless purple-accounts
