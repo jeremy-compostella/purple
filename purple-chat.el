@@ -49,8 +49,10 @@
   :group 'purple-chat)
 
 (defcustom purple-chat-signals
-  '(("ReceivedImMsg"	.	purple-chat-received-im-msg-handler)
-    ("WroteChatMsg"	.	purple-chat-wrote-chat-msg-handler))
+  '(("ConversationCreated"	.	purple-chat-created-handler)
+    ("DeletingConversation"	.	purple-chat-deleting-handler)
+    ("ReceivedImMsg"		.	purple-chat-received-im-msg-handler)
+    ("WroteChatMsg"		.	purple-chat-wrote-chat-msg-handler))
   "List of support chat signals."
   :group 'purple-chat)
 
@@ -82,6 +84,25 @@
       (purple-call-method-async (cdr prop)
 				(curry 'purple-chat-set-field chat (car prop))
 				:int32 id))))
+
+(defun purple-chat-send-im (chat msg)
+  (purple-call-method "PurpleConvImSend"
+		      :int32 (oref chat im) msg))
+
+;; Signals
+(defun purple-chat-created-handler (id)
+  (purple-chat-retreive-all-info id))
+
+(defun purple-chat-deleting-handler (id)
+  (setq purple-chats
+	(delete-if (curry 'purple-chat-eq (purple-chat-find 'id id))
+		   purple-chats)))
+
+(defun purple-chat-received-im-msg-handler (account sender msg im flags)
+  (purple-chat-buffer-insert (purple-chat-find 'im im) sender msg t))
+
+(defun purple-chat-wrote-chat-msg-handler (account who msg id flags)
+  (purple-chat-buffer-insert (purple-chat-find 'id id) who msg nil))
 
 ;; Interactive
 (define-derived-mode purple-chats-mode tabulated-list-mode "purple-chats"
