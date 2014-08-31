@@ -149,6 +149,8 @@
   (local-set-key (kbd "RET") 'purple-chat-with)
   (local-set-key (kbd "a") 'purple-buddy-add)
   (local-set-key (kbd "r") 'purple-buddy-remove)
+  (local-set-key (kbd "G a") 'purple-group-add)
+  (local-set-key (kbd "G r") 'purple-group-remove)
   (toggle-read-only t))
 
 (defun purple-buddy-face (buddy)
