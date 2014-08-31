@@ -147,6 +147,7 @@
   (tabulated-list-init-header)
   (add-hook 'tabulated-list-revert-hook 'purple-buddies-list nil t)
   (local-set-key (kbd "RET") 'purple-chat-with)
+  (local-set-key (kbd "l") 'recenter-top-bottom)
   (local-set-key (kbd "a") 'purple-buddy-add)
   (local-set-key (kbd "r") 'purple-buddy-remove)
   (local-set-key (kbd "G a") 'purple-group-add)
