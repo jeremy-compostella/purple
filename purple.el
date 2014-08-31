@@ -22,6 +22,7 @@
 (require 'dbus)
 
 (require 'purple-buddy)
+(require 'purple-group)
 (require 'purple-chat)
 (require 'purple-mail)
 
@@ -44,22 +45,22 @@
 (defvar purple-accounts '())
 
 ;; Shared
-(defmacro purple-call-method (method &rest args)
-  `(dbus-call-method :session purple-dbus-service
-		     purple-object purple-interface ,method ,@args))
+(defun purple-call-method (method &rest args)
+  (apply 'dbus-call-method
+	 :session purple-dbus-service
+	 purple-object purple-interface method args))
 
 (defun purple-call-method-async (method handler &rest args)
-  (apply 'dbus-call-method-asynchronously :session purple-dbus-service
+  (apply 'dbus-call-method-asynchronously
+	 :session purple-dbus-service
 	 purple-object purple-interface
 	 method handler args))
 
-(defsubst purple-register-signal (sig fun)
-  (dbus-register-signal :session purple-dbus-service
-			purple-object purple-interface sig fun))
-
 (defun purple-register-signals (signals)
   (dolist (sig signals)
-    (purple-register-signal (car sig) (cdr sig))))
+    (dbus-register-signal :session purple-dbus-service
+			  purple-object purple-interface
+			  (car sig) (cdr sig))))
 
 ;; Init
 (defun purple-init ()
@@ -68,7 +69,9 @@
   (setq purple-accounts (purple-account-list))
   (unless purple-accounts
     (error "Purple seems turned off."))
-  (mapc 'purple-buddy-init-for-account purple-accounts))
+  (mapc 'purple-buddy-init-for-account purple-accounts)
+  (purple-group-init)
+  (purple-chat-init))
 
 (defun purple-account-list ()
   (purple-call-method "PurpleAccountsGetAllActive"))

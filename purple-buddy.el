@@ -20,12 +20,13 @@
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 (require 'purple)
+(require 'purple-group)
 (require 'eieio)
 (require 'cl)
 
 (defgroup purple-buddy nil
   "Activity management group"
-  :group 'applications)
+  :group 'purple)
 
 (defvar purple-buddies '())
 (defvar purple-buddy-history '())
@@ -47,7 +48,7 @@
     (icon	.	"PurpleBuddyGetIcon")
     (presence	.	"PurpleBuddyGetPresence")
     (group-id	.	"PurpleBuddyGetGroup"))
-  "List of supported buddy properties method"
+  "List of supported buddy properties method."
   :group 'purple-buddy)
 
 (defcustom purple-buddy-indirect-props
@@ -65,7 +66,7 @@
     ("BuddySignedOff"		.	(rcurry 'purple-buddy-signed-handler t))
     ("BuddyTyping"		.	purple-buddy-typing-handler)
     ("BuddyTypingStopped"	.	(rcurry 'purple-buddy-typing-handler t)))
-  "List of supported buddy signals"
+  "List of supported buddy signals."
   :group 'purple-buddy)
 
 (defcustom purple-buddy-changed-hook '()
@@ -78,10 +79,11 @@
 
 (defcustom purple-buddy-faces '(success warning error)
   "3 element font list associated with availability, respectively
-  available, not-available and offline"
+  available, not-available and offline."
   :group 'purple-buddy)
 
 (defun purple-buddy-init-for-account (id)
+  (setq purple-buddies '())
   (mapc 'purple-buddy-retreive-all-info
 	(purple-call-method "PurpleFindBuddies" :int32 id ""))
   (purple-register-signals purple-buddy-signals))
@@ -96,8 +98,8 @@
       (run-hook-with-args 'purple-buddy-changed-hook buddy field value))))
 
 (defun purple-buddy-find (field value)
-  (find id purple-buddies
-	:test (lambda (x y) (equal value (slot-value y field)))))
+  (find value purple-buddies
+	:key (rcurry 'slot-value field) :test 'equal))
 
 (defun purple-buddy-eq (b1 b2)
   (= (oref b1 id) (oref b2 id)))
@@ -116,7 +118,7 @@
 
 ;; Signals
 (defun purple-buddy-added-handler (id)
-  (purple-buddy-retreive-info id))
+  (purple-buddy-retreive-all-info id))
 
 (defun purple-buddy-removed-handler (id)
   (setq purple-buddies
@@ -145,6 +147,8 @@
   (tabulated-list-init-header)
   (add-hook 'tabulated-list-revert-hook 'purple-buddies-list nil t)
   (local-set-key (kbd "RET") 'purple-chat-with)
+  (local-set-key (kbd "a") 'purple-buddy-add)
+  (local-set-key (kbd "r") 'purple-buddy-remove)
   (toggle-read-only t))
 
 (defun purple-buddy-face (buddy)
@@ -192,21 +196,32 @@ PROMPT is a string to prompt with."
 			(ido-completing-read prompt (purple-buddy-fancy-list)
 			 nil t nil 'purple-buddy-history)))))
 
-;; Group
-(defun purple-group-add (name)
-  (interactive "sGroup name: ")
-  (let ((id (purple-call-method "PurpleGroupNew" name))
-	(node (purple-call-method "PurpleBlistGetRoot")))
-    (purple-call-method "PurpleBlistAddGroup" :int32 id :int32 node)))
+(defun purple-buddy-add (name alias group)
+  (interactive (list (read-string "Name: ")
+		     (read-string "Alias: ")
+		     (purple-group-completing-read "Add into group: ")))
+  (let* ((account (car purple-accounts))
+	 (id (purple-call-method "PurpleBuddyNew" :int32 account name alias)))
+    (purple-call-method "PurpleAccountAddBuddy" :int32 account :int32 id)
+    (purple-call-method "PurpleBlistAddBuddy" :int32 id :int32 0
+			:int32 (oref group node) :int32 0)))
 
-(defun purple-group-remove (name)
-  (interactive "sGroup name: ")
-  (let ((id (purple-call-method "PurpleFindGroup" name)))
-    (purple-call-method "PurpleBlistRemoveGroup" :int32 id)))
+(defun purple-buddy-do-remove (buddy)
+  (let* ((account (car purple-accounts)) ;TODO: include account into
+					 ;buddy definition
+	 (id (oref buddy id))
+	 (group (purple-call-method "PurpleBuddyGetGroup" :int32 id)))
+    (purple-call-method "PurpleAccountRemoveBuddy"
+			:int32 account :int32 (oref buddy id)
+			:int32 group)
+    (purple-call-method "PurpleBlistRemoveBuddy" :int32 (oref buddy id))))
 
-(defun purple-group-rename (old-name new-name)
-  (interactive "sOld name: \nsNew name: ")
-  (let ((id (purple-call-method "PurpleFindGroup" old-name)))
-    (purple-call-method "PurpleBlistRenameGroup" :int32 id new-name)))
+(defun purple-buddy-remove (buddy)
+  (interactive (list (purple-buddy-completing-read)))
+  (if (eq major-mode 'purple-buddies-mode)
+      (when (yes-or-no-p (format "Are you sure you want to remove %s buddy ?"
+				 (oref buddy alias)))
+	(purple-buddy-do-remove buddy))
+    (purple-buddy-do-remove buddy)))
 
 (provide 'purple-buddy)
