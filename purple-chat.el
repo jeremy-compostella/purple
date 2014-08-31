@@ -19,123 +19,127 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-(require 'purple)
+(require 'purple-buddy)
 (require 'html2text)
 (require 'cl)
 
-(defvar purple-buddy-buffer-name-fmt "%s %s %s")
+(defvar purple-chats '())
+(defvar purple-chat-history '())
 
-(defvar purple-chat-signals '(("ReceivedImMsg"	.	purple-received-im-msg-handler)
-			      ("WroteChatMsg"	.	purple-wrote-chat-msg-handler)))
+(defgroup purple-chat nil
+  "Activity management group"
+  :group 'purple)
 
-(defvar-local purple-chat-id nil)
-(defvar-local purple-chat-buddies '())
-(defvar-local purple-chat-unread 0)
-(defvar-local purple-chat-title "")
+(defclass purple-chat ()
+  ((id :type number :initarg id)
+   (title :initarg topic :initform "")
+   (im :initarg im)
+   (chat-data :initarg chat-data)
+   (type :initform)
+   (buddy :initarg buddy :initform nil)
+   (unread :initarg unread :initform 0)))
 
-(defconst purple-separator "-")
+(defcustom purple-chat-props
+  '((type	.	"PurpleConversationGetType")
+    (title	.	"PurpleConversationGetTitle")
+    (name	.	"PurpleConversationGetName")
+    (im		.	"PurpleConvIm")
+    (chat-data	.	"PurpleConversationGetChatData"))
+  "List of supported chat properties method."
+  :group 'purple-chat)
 
-(defvar-local purple-separator-marker nil)
-(defvar-local purple-input-area-marker nil)
+(defcustom purple-chat-signals
+  '(("ReceivedImMsg"	.	purple-chat-received-im-msg-handler)
+    ("WroteChatMsg"	.	purple-chat-wrote-chat-msg-handler))
+  "List of support chat signals."
+  :group 'purple-chat)
 
-(defface purple-chat-my-message-face
-  '((t (:foreground "salmon" :weight bold)))
-  "face for own message")
+;; Init
+(defun purple-chat-init ()
+  (setq purple-chats '())
+  (mapc 'purple-chat-retreive-all-info
+	(purple-call-method "PurpleGetConversations"))
+  (purple-register-signals purple-chat-signals))
 
-(defface purple-chat-foreign-message-face
-  '((t (:foreground "SteelBlue1" :weight bold)))
-  "face for foriegn message")
+(defun purple-chat-set-field (chat field value)
+  (if (eq field 'name)
+      (set-slot-value chat 'buddy (or (purple-buddy-find 'name value)
+				      (purple-buddy 0 'id 0 'name value)))
+    (set-slot-value chat field value)))
 
-;; Chat buffers management
-(defun purple-get-buddy-buffer-name (buddy)
-  (format purple-buddy-buffer-name-fmt
-	  (slot-value buddy 'alias)
-	  (if (= 1 (slot-value buddy 'onlinep))
-	      "(Online)"
-	    "(Offline)")))
+(defun purple-chat-eq (c1 c2)
+  (= (oref c1 id) (oref c2 id)))
 
-(defun purple-create-buddy-buffer (buddy conversation)
-  (with-current-buffer (get-buffer-create (purple-get-buddy-buffer-name buddy))
-    (purple-chat-mode)
-    (setq purple-chat-buddies (list buddy)
-	  purple-chat-unread 0
-	  purple-chat-title ""
-	  purple-conversation conversation)
-    (current-buffer)))
+(defun purple-chat-find (field value)
+  (find value purple-chats
+	:key (rcurry 'slot-value field) :test 'equal))
 
-(defsubst purple-chat-buffers ()
-  (delete-if-not (curry 'eq 'purple-chat-mode) (buffer-list)
-		 :key (curry 'buffer-local-value 'major-mode)))
+(defun purple-chat-retreive-all-info (id)
+  (let ((chat (or (purple-chat-find 'id id)
+		  (purple-chat id 'id id))))
+    (add-to-list 'purple-chats chat t 'purple-chat-eq)
+    (dolist (prop purple-chat-props)
+      (purple-call-method-async (cdr prop)
+				(curry 'purple-chat-set-field chat (car prop))
+				:int32 id))))
 
-(defun purple-chat-insert-received-msg (buffer buddy text)
-  (with-current-buffer buffer
-    (insert (with-temp-buffer (insert text) (html2text) (buffer-string)))
-    (insert "\n")))
-
-(define-derived-mode purple-chats-mode tabulated-list-mode "Conversations"
-  (setq tabulated-list-format [("Buddies" 60 t)
-			       ("Unread" 7 t)
-			       ("Title" 35 t)])
-  (setq tabulated-list-sort-key (cons "Buddies" nil))
+;; Interactive
+(define-derived-mode purple-chats-mode tabulated-list-mode "purple-chats"
+  (setq tabulated-list-format [("Title" 30 t)
+			       ("Buddy Status" 15 t)
+			       ("Unread" 7 t)])
+  (setq tabulated-list-sort-key (cons "Unread" t))
   (tabulated-list-init-header)
   (add-hook 'tabulated-list-revert-hook 'purple-chats-list nil t)
-  (local-set-key (kbd "RET")
-		 (lambda ()
-		   (interactive)
-		   (pop-to-buffer-same-window (tabulated-list-get-id))))
+  (local-set-key (kbd "k") (lambda () (interactive) (kill-buffer (current-buffer))))
+  (local-set-key (kbd "RET") 'purple-chat-show-buffer)
   (toggle-read-only t))
 
 (defun purple-chats-list ()
   (interactive)
-  (with-current-buffer (get-buffer-create "*purple-conversations*")
+  (with-current-buffer (get-buffer-create purple-chats-buffer-name)
     (let ((inhibit-read-only t))
       (purple-chats-mode)
       (setq tabulated-list-entries nil)
-      (dolist (buf (purple-chat-buffers))
-	(let ((unread (buffer-local-value 'purple-chat-unread buf)))
-	  (push (list buf (vector (buffer-local-value 'purple-chat-title buf)
-				  (propertize (number-to-string unread) 'face (if (= 0 unread) 'error 'success))
-				  (mapconcat (rcurry 'slot-value 'alias)
-					     (buffer-local-value 'purple-chat-buddies buf)
-					     ", ")))
+      (dolist (chat purple-chats)
+	(let ((buddy (oref chat buddy)))
+	  (push (list chat (vector (oref chat title)
+				  (if (not (= 0 (oref buddy id)))
+				      (propertize (capitalize (oref buddy status))
+						  'face (purple-buddy-face buddy))
+				    "Unknown")
+				  (propertize (number-to-string (oref chat unread))
+					      'face (if (= 0 (oref chat unread))
+							'error
+						      'success))))
 		tabulated-list-entries)))
       (tabulated-list-print)
       (pop-to-buffer-same-window (current-buffer)))))
 
-;; Chat signals
-(defun purple-received-im-msg-handler (account sender text conversation flags)
-  (let ((buddy (or (purple-get-buddy 'name sender)
-		   (buddy nil 'account-id account 'name sender 'alias sender))))
-    (purple-chat-insert-received-msg buffer buddy text)))
+(defun purple-chat-propertize (chat)
+  (let ((buddy (oref chat buddy))
+	(str (oref chat title)))
+    (if buddy
+	(propertize str 'face (purple-buddy-face buddy))
+      str)))
 
-(defun purple-wrote-chat-msg-handler (account sender msg conversation flags))
+(defun purple-chat-fancy-list ()
+  (let ((chats (sort (copy-list purple-chats)
+		     (lambda (x y) (> (oref x unread) (oref y unread))))))
+    (mapcar 'purple-chat-propertize chats)))
 
-;; Conversation
-(defun purple-new-conversation (buddy)
-  (purple-call-method "PurpleConversationNew" :int32 1
-		      :int32 (oref buddy account-id) (oref buddy name)))
-
-(defun purple-chat-with (&optional buddy)
+(defun purple-chat-completing-read (&optional prompt)
+  "Read a string in the minibuffer with ido-style completion to
+select a chat.
+PROMPT is a string to prompt with."
   (interactive)
-  (let* ((buddy (purple-smart-buddy-selector))
-	 (conversation (or (let ((buf (purple-get-buddy-buffer buddy)))
-			     (when buf
-			       (buffer-local-value 'purple-conversation buf)))
-			   (purple-new-conversation buddy))))
-    (pop-to-buffer-same-window (purple-create-buddy-buffer buddy conversation))))
-
-(defun purple-get-conversation-buffer (conversation)
-  (find (slot-value buddy 'alias) (purple-chat-buffers)
-	:key (curry 'buffer-local-value 'purple-conversation)
-	:test 'equal))
-
-(defun purple-get-buddy-buffer (buddy)
-  (find (slot-value buddy 'alias) (purple-chat-buffers)
-	:key (lambda (x) (slot-value (buffer-local-value 'purple-buddy x) 'alias))
-	:test 'string=))
-
-(define-derived-mode purple-chat-mode fundamental-mode
-  "chat-mode"
-  (define-key map "\r" 'purple-chat-send-msg))
+  (let ((prompt (or prompt "Chat: ")))
+    (if (eq major-mode 'purple-chats-mode)
+	(let ((chat (tabulated-list-get-id)))
+	  (add-to-list 'purple-chat-history (slot-value chat 'title))
+	  chat)
+      (purple-chat-find 'title
+			(ido-completing-read prompt (purple-chat-fancy-list)
+			 nil t nil 'purple-chat-history)))))
 
 (provide 'purple-chat)
