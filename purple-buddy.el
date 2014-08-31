@@ -37,6 +37,7 @@
    (signed-on :initarg signed-on :initform nil)
    (status :initarg status :initform nil)
    (typingp :initarg typingp :initform nil)
+   (group :initarg group :initform "")
    (icon :initarg icon :initform nil)))
 
 (defcustom purple-buddy-props
@@ -44,13 +45,15 @@
     (alias	.	"PurpleBuddyGetAlias")
     (signed-on	.	"PurpleBuddyIsOnline")
     (icon	.	"PurpleBuddyGetIcon")
-    (presence	.	"PurpleBuddyGetPresence"))
+    (presence	.	"PurpleBuddyGetPresence")
+    (group-id	.	"PurpleBuddyGetGroup"))
   "List of supported buddy properties method"
   :group 'purple-buddy)
 
 (defcustom purple-buddy-indirect-props
   '((presence		.	(active-status 	. "PurplePresenceGetActiveStatus"))
-    (active-status	.	(status 	. "PurpleStatusGetId")))
+    (active-status	.	(status 	. "PurpleStatusGetId"))
+    (group-id           .       (group		. "PurpleGroupGetName")))
   "List of indirected buddy properties method."
   :group 'purple-buddy)
 
@@ -116,7 +119,9 @@
   (purple-buddy-retreive-info id))
 
 (defun purple-buddy-removed-handler (id)
-  (purple-buddy-retreive-info id))
+  (setq purple-buddies
+	(delete-if (curry 'purple-buddy-eq (purple-buddy-find 'id id))
+		   purple-buddies)))
 
 (defun purple-buddy-status-handler (id old-status status)
   (purple-buddy-set-field (purple-buddy-find 'id id)
@@ -134,7 +139,8 @@
 (define-derived-mode purple-buddies-mode tabulated-list-mode "Buddies"
   (setq tabulated-list-format [("Alias" 35 t)
 			       ("Name" 40 t)
-			       ("Status" 10 t)])
+			       ("Status" 10 t)
+			       ("Group" 20 t)])
   (setq tabulated-list-sort-key (cons "Alias" nil))
   (tabulated-list-init-header)
   (add-hook 'tabulated-list-revert-hook 'purple-buddies-list nil t)
@@ -158,7 +164,8 @@
       (dolist (buddy purple-buddies)
 	(push (list buddy (vector (oref buddy alias) (oref buddy name)
 				  (propertize (capitalize (oref buddy status))
-					      'face (purple-buddy-face buddy))))
+					      'face (purple-buddy-face buddy))
+				  (oref buddy group)))
 	      tabulated-list-entries))
       (tabulated-list-print)
       (pop-to-buffer-same-window (current-buffer)))))
@@ -184,5 +191,22 @@ PROMPT is a string to prompt with."
       (purple-buddy-find 'alias
 			(ido-completing-read prompt (purple-buddy-fancy-list)
 			 nil t nil 'purple-buddy-history)))))
+
+;; Group
+(defun purple-group-add (name)
+  (interactive "sGroup name: ")
+  (let ((id (purple-call-method "PurpleGroupNew" name))
+	(node (purple-call-method "PurpleBlistGetRoot")))
+    (purple-call-method "PurpleBlistAddGroup" :int32 id :int32 node)))
+
+(defun purple-group-remove (name)
+  (interactive "sGroup name: ")
+  (let ((id (purple-call-method "PurpleFindGroup" name)))
+    (purple-call-method "PurpleBlistRemoveGroup" :int32 id)))
+
+(defun purple-group-rename (old-name new-name)
+  (interactive "sOld name: \nsNew name: ")
+  (let ((id (purple-call-method "PurpleFindGroup" old-name)))
+    (purple-call-method "PurpleBlistRenameGroup" :int32 id new-name)))
 
 (provide 'purple-buddy)
