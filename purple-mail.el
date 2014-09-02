@@ -43,4 +43,35 @@
 	(let ((separator (if (looking-back "Cc: ") "" ", ")))
 	  (purple-mail-insert-buddy "CC email to: " separator))))))
 
+(defun purple-mail-next-field-pos ()
+  (save-excursion
+    (re-search-forward "^[a-zA-Z]+: " nil t)
+    (1- (line-beginning-position))))
+
+(defun purple-mail-extract-field (field)
+  (save-excursion
+    (goto-char (point-min))
+    (re-search-forward field nil t)
+    (split-string (replace-regexp-in-string "\n" ""
+					    (buffer-substring-no-properties
+					     (point)
+					     (purple-mail-next-field-pos)))
+		  ">,")))
+
+(defun purple-mail-extract-fields ()
+  (apply 'append (mapcar 'purple-mail-extract-field
+			 '("^From: " "^To: " "^Cc: "))))
+
+(defun purple-mail-add-buddy ()
+  (interactive)
+  (if (eq major-mode 'gnus-article-mode)
+      (let* ((buddy (ido-completing-read "Buddy data: " (purple-mail-extract-fields)))
+	     (alias (progn (string-match "\"\\\(.*\\\)\"" buddy) (match-string 1 buddy)))
+	     (name (progn (string-match "<\\\([^>]+\\\)*" buddy) (match-string 1 buddy)))
+	     (group (purple-group-completing-read)))
+	(when (yes-or-no-p (format "Are you sure you want to add buddy \"%s\" <%s> ?"
+				   alias name))
+	  (purple-buddy-add name alias group)))
+    (purple-buddy-add)))
+
 (provide 'purple-mail)
