@@ -69,7 +69,9 @@
 
 (defun purple-chat-buffer-buddy-has-changed (buddy field value)) ;TODO: implement
 
-(defun purple-chat-buffer-kill ())	;TODO: implement
+(defun purple-chat-buffer-kill ()
+  (when (eq major-mode 'purple-chat-mode)
+    (purple-chat-destroy purple-chat)))
   
 (define-derived-mode purple-chat-mode fundamental-mode
   "chat-mode"
