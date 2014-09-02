@@ -72,7 +72,8 @@
     (error "Purple seems turned off."))
   (mapc 'purple-buddy-init-for-account purple-accounts)
   (purple-group-init)
-  (purple-chat-init))
+  (purple-chat-init)
+  (purple-chat-buffer-init))
 
 (defun purple-account-list ()
   (purple-call-method "PurpleAccountsGetAllActive"))

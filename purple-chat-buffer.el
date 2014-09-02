@@ -63,6 +63,7 @@
 (defvar-local purple-chat-msg-history '())
 
 (defun purple-chat-buffer-init ()
+  (add-to-list 'html2text-remove-tag-list "span")
   (add-hook 'purple-buddy-changed-hook
 	    'purple-chat-buffer-buddy-has-changed))
 
