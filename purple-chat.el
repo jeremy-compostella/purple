@@ -104,13 +104,17 @@
 
 (defun purple-chat-new (buddy &optional props)
   (setq purple-chats-open-next-created t)
-  (add-to-list 'purple-chats-in-creation
-	       (purple-call-method "PurpleConversationNew" :int32 1
-				   :int32 (car purple-accounts) ;TODO: manage account pease !!!!
-				   (oref buddy name))))
+  (purple-call-method "PurpleConversationNew" :int32 1
+		      :int32 (car purple-accounts) ;TODO: manage account pease !!!!
+		      (oref buddy name)))
 
-(defun purple-chat-destroy (chat)
-  (purple-call-method "PurpleConversationDestroy" :int32 (oref chat id)))
+(defun purple-chat-destroy (&optional chat)
+  (interactive)
+  (let ((chat (if (eq major-mode 'purple-chats-mode)
+		  (tabulated-list-get-id)
+		chat)))
+    (ignore-errors
+      (purple-call-method "PurpleConversationDestroy" :int32 (oref chat id)))))
 
 (defun purple-chat-send-im (chat msg)
   (purple-call-method "PurpleConvImSend"
@@ -144,7 +148,7 @@
   (setq tabulated-list-sort-key (cons "Unread" t))
   (tabulated-list-init-header)
   (add-hook 'tabulated-list-revert-hook 'purple-chats-list nil t)
-  (local-set-key (kbd "k") (lambda () (interactive) (kill-buffer (current-buffer))))
+  (local-set-key (kbd "k") 'purple-chat-destroy)
   (local-set-key (kbd "RET") 'purple-chat-show-buffer)
   (toggle-read-only t))
 
@@ -194,6 +198,10 @@ PROMPT is a string to prompt with."
       (purple-chat-find 'title
 			(ido-completing-read prompt (purple-chat-fancy-list)
 			 nil t nil 'purple-chat-history)))))
+
+(defun purple-chat-jump (&optional title)
+  (interactive)
+  (purple-chat-show-buffer (purple-chat-completing-read "Jump to chat: ")))
 
 (defun purple-chat-with (buddy)
   (interactive (list (purple-buddy-completing-read "Chat with: ")))
