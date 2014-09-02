@@ -26,13 +26,13 @@
 (defvar purple-chats '())
 (defvar purple-chat-history '())
 
-(defgroup purple-chat nil
+(defgroup ple-chat nil
   "Activity management group"
   :group 'purple)
 
-(defclass purple-chat ()
+(defclass ple-chat ()
   ((id :type number :initarg id)
-   (title :initarg topic :initform "")
+   (title :initarg title :initform "")
    (im :initarg im)
    (chat-data :initarg chat-data)
    (type :initform)
@@ -52,7 +52,8 @@
   '(("ConversationCreated"	.	purple-chat-created-handler)
     ("DeletingConversation"	.	purple-chat-deleting-handler)
     ("ReceivedImMsg"		.	purple-chat-received-im-msg-handler)
-    ("WroteChatMsg"		.	purple-chat-wrote-chat-msg-handler))
+    ("WroteImMsg"		.	purple-chat-wrote-im-msg-handler)
+    ("SentImMsg"		.	purple-chat-sent-im-msg-handler))
   "List of support chat signals."
   :group 'purple-chat)
 
@@ -72,22 +73,44 @@
 (defun purple-chat-eq (c1 c2)
   (= (oref c1 id) (oref c2 id)))
 
-(defun purple-chat-find (field value)
-  (find value purple-chats
-	:key (rcurry 'slot-value field) :test 'equal))
+(defun purple-chat-find (field value &optional equal-fun)
+  (let ((equal-fun (or equal-fun 'equal)))
+    (find value purple-chats
+	  :key (rcurry 'slot-value field) :test equal-fun)))
 
 (defun purple-chat-retreive-all-info (id)
   (let ((chat (or (purple-chat-find 'id id)
-		  (purple-chat id 'id id))))
+		  (ple-chat id 'id id))))
     (add-to-list 'purple-chats chat t 'purple-chat-eq)
     (dolist (prop purple-chat-props)
       (purple-call-method-async (cdr prop)
 				(curry 'purple-chat-set-field chat (car prop))
-				:int32 id))))
+				:int32 id))
+    chat))
+
+(defun purple-chat-create (buddy &optional id props)
+  (let* ((id (if id id 0))
+	 (chat (ple-chat id 'id id
+			 'title (oref buddy alias)
+			 'buddy buddy)))
+    (add-to-list 'purple-chats chat t 'purple-chat-eq)
+    (dolist (prop props)
+      (set-slot-value chat (car props) (cdr props)))
+    (unless (= id 0)
+      (purple-chat-retreive-all-info id))
+    chat))
+
+(defun purple-chat-new (buddy &optional props)
+  (let ((chat (purple-chat-create buddy 0 props))
+	(id (purple-call-method "PurpleConversationNew" :int32 1
+				:int32 (car purple-accounts) ;TODO: manage account pease !!!!
+				(oref buddy name))))
+    (set-slot-value chat 'id id)
+    chat))
 
 (defun purple-chat-send-im (chat msg)
   (purple-call-method "PurpleConvImSend"
-		      :int32 (oref chat im) msg))
+		      :int32 (slot-value chat 'im) msg))
 
 ;; Signals
 (defun purple-chat-created-handler (id)
@@ -98,10 +121,13 @@
 	(delete-if (curry 'purple-chat-eq (purple-chat-find 'id id))
 		   purple-chats)))
 
-(defun purple-chat-received-im-msg-handler (account sender msg im flags)
-  (purple-chat-buffer-insert (purple-chat-find 'im im) sender msg t))
+(defun purple-chat-received-im-msg-handler (account sender msg id flags)
+  (let* ((buddy (purple-buddy-find 'name sender))
+	 (chat (or (purple-chat-find 'id id)
+		   (purple-chat-new buddy id))))
+    (purple-chat-buffer-insert chat sender msg t)))
 
-(defun purple-chat-wrote-chat-msg-handler (account who msg id flags)
+(defun purple-chat-wrote-im-msg-handler (account who msg id flags)
   (purple-chat-buffer-insert (purple-chat-find 'id id) who msg nil))
 
 ;; Interactive
@@ -162,5 +188,11 @@ PROMPT is a string to prompt with."
       (purple-chat-find 'title
 			(ido-completing-read prompt (purple-chat-fancy-list)
 			 nil t nil 'purple-chat-history)))))
+
+(defun purple-chat-with (buddy)
+  (interactive (list (purple-buddy-completing-read "Chat with: ")))
+  (let ((chat (or (purple-chat-find 'buddy buddy 'purple-buddy-eq)
+		  (purple-chat-create buddy))))
+    (purple-chat-show-buffer chat)))    
 
 (provide 'purple-chat)

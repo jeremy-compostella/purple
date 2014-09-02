@@ -30,7 +30,7 @@
 (defvar purple-buddies '())
 (defvar purple-buddy-history '())
 
-(defclass purple-buddy ()
+(defclass ple-buddy ()
   ((id :type number :initarg id)
    (name :initarg name :initform "")
    (alias :initarg alias :initform "")
@@ -68,9 +68,8 @@
   "List of supported buddy signals."
   :group 'purple-buddy)
 
-(defcustom purple-buddy-changed-hook '()
-  "Hook list runned when a buddy data has changed."
-  :group 'purple-buddy)
+(defvar purple-buddy-changed-hook '()
+  "Hook list runned when a buddy data has changed.")
 
 (defcustom purple-buddies-buffer-name "*purple-buddies*"
   "Buddy list buffer name"
@@ -109,7 +108,7 @@
 
 (defun purple-buddy-retreive-all-info (id)
   (let ((buddy (or (purple-buddy-find 'id id)
-		   (purple-buddy id 'id id))))
+		   (ple-buddy id 'id id))))
     (add-to-list 'purple-buddies buddy t 'purple-buddy-eq)
     (dolist (prop purple-buddy-props)
       (purple-buddy-retreive-info buddy (car prop) (cdr prop) :int32 id))))
@@ -137,7 +136,7 @@
 
 ;; Interactive
 (define-derived-mode purple-buddies-mode tabulated-list-mode "Buddies"
-  (setq tabulated-list-format [("Alias" 35 t)
+  (setq tabulated-list-format [("Alias" 30 t)
 			       ("Name" 40 t)
 			       ("Status" 10 t)
 			       ("Group" 20 t)])

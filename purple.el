@@ -24,6 +24,7 @@
 (require 'purple-buddy)
 (require 'purple-group)
 (require 'purple-chat)
+(require 'purple-chat-buffer)
 (require 'purple-mail)
 
 (defgroup purple nil

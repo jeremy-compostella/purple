@@ -62,9 +62,18 @@
 
 (defvar-local purple-chat-msg-history '())
 
+(defun purple-chat-buffer-init ()
+  (add-hook 'purple-buddy-changed-hook
+	    'purple-chat-buffer-buddy-has-changed))
+
+(defun purple-chat-buffer-buddy-has-changed (buddy field value)) ;TODO: implement
+
+(defun purple-chat-buffer-kill ())	;TODO: implement
+  
 (define-derived-mode purple-chat-mode fundamental-mode
   "chat-mode"
-  (local-set-key (kbd "RET") 'purple-chat-buffer-send-msg))
+  (local-set-key (kbd "RET") 'purple-chat-buffer-send-msg)
+  (add-hook 'kill-buffer-hook 'purple-chat-buffer-kill))
 
 (defun purple-chat-buffer-create (chat)
   (with-current-buffer
@@ -89,11 +98,22 @@
 	:key (curry 'buffer-local-value 'purple-chat)
 	:test 'purple-chat-eq))
 
+(defun purple-chat-buffer-find-or-create (chat)
+  (or (purple-chat-buffer-find chat)
+      (purple-chat-buffer-create chat)))
+
 (defun purple-chat-wash-msg (msg)
   (with-temp-buffer
     (insert msg)
     (html2text)
     (buffer-string)))
+
+(defun purple-chat-show-buffer (&optional chat)
+  (interactive)
+  (let ((chat (or chat
+		  (when (eq major-mode 'purple-chats-mode)
+		    (tabulated-list-get-id)))))
+    (pop-to-buffer-same-window (purple-chat-buffer-find-or-create chat))))
 
 (defun purple-chat-format-message (buddy-alias msg received)
     (apply 'propertize
@@ -107,21 +127,23 @@
 	   purple-chat-buffer-properties))
 
 (defun purple-chat-buffer-insert (chat from msg received)
-  (with-current-buffer (or (purple-chat-buffer-find chat)
-			   (purple-chat-buffer-create chat))
-    (let ((inhibit-read-only t)
-	  (buddy-alias (if received
-			   from
-			 "Me")))
-      (goto-char (marker-position purple-chat-sep-marker))
-      (insert-before-markers (purple-chat-format-message msg received)))))
+  (with-current-buffer (purple-chat-buffer-find-or-create chat)
+    (save-excursion
+      (let* ((inhibit-read-only t)
+	     (from-buddy (purple-buddy-find 'name from))
+	     (buddy-alias (if received
+			     (if from-buddy (oref from-buddy alias) from)
+			   "Me")))
+	(goto-char (marker-position purple-chat-sep-marker))
+	(insert-before-markers (purple-chat-format-message buddy-alias msg received))))))
 
 ;; Interactive
 (defun purple-chat-buffer-send-msg ()
+  (interactive)
   (let ((msg (delete-and-extract-region
 	      (marker-position purple-chat-input-marker)
 	      (point-max))))
-    (when (> 0 (length msg))
+    (when (> (length msg) 0)
       (purple-chat-send-im purple-chat msg))))
 
 (provide 'purple-chat-buffer)
