@@ -172,7 +172,7 @@
 				  (oref buddy group)))
 	      tabulated-list-entries))
       (tabulated-list-print)
-      (pop-to-buffer-same-window (current-buffer)))))
+      (pop-to-buffer (current-buffer)))))
 
 (defun purple-buddy-propertize (buddy)
   (propertize (slot-value buddy 'alias) 'face (purple-buddy-face buddy)))

@@ -76,6 +76,7 @@
 (define-derived-mode purple-chat-mode fundamental-mode
   "chat-mode"
   (local-set-key (kbd "RET") 'purple-chat-buffer-send-msg)
+  (local-set-key (kbd "C-c q") 'quit-window)
   (add-hook 'kill-buffer-hook 'purple-chat-buffer-kill))
 
 (defun purple-chat-buffer-create (chat)
@@ -116,7 +117,7 @@
   (let ((chat (or chat
 		  (when (eq major-mode 'purple-chats-mode)
 		    (tabulated-list-get-id)))))
-    (pop-to-buffer-same-window (purple-chat-buffer-find-or-create chat))))
+    (pop-to-buffer (purple-chat-buffer-find-or-create chat))))
 
 (defun purple-chat-format-message (buddy-alias msg received)
     (apply 'propertize

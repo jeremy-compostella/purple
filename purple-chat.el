@@ -167,7 +167,7 @@
 						      'success))))
 		tabulated-list-entries)))
       (tabulated-list-print)
-      (pop-to-buffer-same-window (current-buffer)))))
+      (pop-to-buffer (current-buffer)))))
 
 (defun purple-chat-propertize (chat)
   (let ((buddy (oref chat buddy))
