@@ -77,7 +77,7 @@
 (defun purple-chat-buffer-buddy-has-changed (buddy &optional field value)
   (let ((chat (purple-chat-find 'buddy buddy 'purple-buddy-eq)))
     (when chat
-      (purple-chat-buffer-chat-has-changed))))
+      (purple-chat-buffer-chat-has-changed chat))))
 
 (defun purple-chat-buffer-kill ()
   (when (eq major-mode 'purple-chat-mode)
