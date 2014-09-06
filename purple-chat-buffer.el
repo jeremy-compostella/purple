@@ -105,7 +105,8 @@
        (format purple-chat-buffer-name-fmt
 	       (oref chat title)))
     (purple-chat-mode)
-    (setq purple-chat chat
+    (setq default-directory (getenv "HOME")
+          purple-chat chat
 	  purple-chat-sep-marker (point-marker))
     (insert (propertize purple-chat-separator
 			'read-only t 'front-sticky t 'rear-nonsticky t))
