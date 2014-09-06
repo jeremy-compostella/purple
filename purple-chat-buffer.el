@@ -64,9 +64,20 @@
 
 (defun purple-chat-buffer-init ()
   (add-hook 'purple-buddy-changed-hook
-	    'purple-chat-buffer-buddy-has-changed))
+	    'purple-chat-buffer-buddy-has-changed)
+  (add-hook 'purple-chat-changed-hook
+	    'purple-chat-buffer-chat-has-changed))
 
-(defun purple-chat-buffer-buddy-has-changed (buddy field value)) ;TODO: implement
+(defun purple-chat-buffer-chat-has-changed (chat &optional field value)
+  (let ((buf (purple-chat-buffer-find chat)))
+    (when buf
+      (with-current-buffer buf
+        (purple-chat-buffer-header-line)))))
+
+(defun purple-chat-buffer-buddy-has-changed (buddy &optional field value)
+  (let ((chat (purple-chat-find 'buddy buddy 'purple-buddy-eq)))
+    (when chat
+      (purple-chat-buffer-chat-has-changed))))
 
 (defun purple-chat-buffer-kill ()
   (when (eq major-mode 'purple-chat-mode)
@@ -77,6 +88,16 @@
   (local-set-key (kbd "RET") 'purple-chat-buffer-send-msg)
   (local-set-key (kbd "C-c q") 'quit-window)
   (add-hook 'kill-buffer-hook 'purple-chat-buffer-kill))
+
+(defun purple-chat-buffer-header-line ()
+  (let ((buddy (oref purple-chat buddy)))
+    (when buddy
+      (setq header-line-format
+            (concat (capitalize (propertize (oref buddy status)
+                                            'face (purple-buddy-face buddy)))
+                    (if (oref buddy typingp)
+                        (concat " - " (oref buddy alias) " is typing")
+                        ""))))))
 
 (defun purple-chat-buffer-create (chat)
   (with-current-buffer

@@ -55,6 +55,9 @@
   "List of support chat signals."
   :group 'purple-chat)
 
+(defvar purple-chat-changed-hook '()
+  "Hook list runned when a chat data has changed.")
+
 ;; Init
 (defun purple-chat-init ()
   (setq purple-chats '())
@@ -64,9 +67,11 @@
 
 (defun purple-chat-set-field (chat field value)
   (if (eq field 'name)
-      (set-slot-value chat 'buddy (or (purple-buddy-find 'name value)
-				      (ple-buddy 0 'id 0 'name value)))
-    (set-slot-value chat field value))
+      (progn (set-slot-value chat 'buddy (or (purple-buddy-find 'name value)
+                                             (ple-buddy 0 'id 0 'name value)))
+             (run-hook-with-args 'purple-chat-changed-hook chat 'buddy value))
+    (set-slot-value chat field value)
+    (run-hook-with-args 'purple-chat-changed-hook chat field value))
   (if (and (eq field 'title) purple-chats-open-next-created)
       (progn (setq purple-chats-open-next-created nil)
 	     (purple-chat-show-buffer chat))))
