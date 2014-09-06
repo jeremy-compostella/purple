@@ -63,7 +63,6 @@
 (defvar-local purple-chat-msg-history '())
 
 (defun purple-chat-buffer-init ()
-  (add-to-list 'html2text-remove-tag-list "span")
   (add-hook 'purple-buddy-changed-hook
 	    'purple-chat-buffer-buddy-has-changed))
 
@@ -108,8 +107,10 @@
 
 (defun purple-chat-wash-msg (msg)
   (with-temp-buffer
-    (insert msg)
-    (html2text)
+    (let ((buf (current-buffer)))
+      (with-temp-buffer
+        (insert msg)
+        (shell-command-on-region (point-min) (point-max) "html2text" buf)))
     (buffer-string)))
 
 (defun purple-chat-show-buffer (&optional chat)
@@ -121,7 +122,7 @@
 
 (defun purple-chat-format-message (buddy-alias msg received)
     (apply 'propertize
-	   (format "[%s] %s> %s\n"
+	   (format "[%s] %s> %s"
 		   (format-time-string purple-chat-buffer-time-fmt)
 		   buddy-alias
 		   (purple-chat-wash-msg msg))

@@ -20,7 +20,6 @@
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 (require 'purple-buddy)
-(require 'html2text)
 (require 'cl)
 
 (defvar purple-chats '())
