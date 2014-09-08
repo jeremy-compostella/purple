@@ -44,16 +44,17 @@
   '((name	.	"PurpleBuddyGetName")
     (alias	.	"PurpleBuddyGetAlias")
     (signed-on	.	"PurpleBuddyIsOnline")
-    (icon	.	"PurpleBuddyGetIcon")
+    (icon-id	.	"PurpleBuddyGetIcon")
     (presence	.	"PurpleBuddyGetPresence")
     (group-id	.	"PurpleBuddyGetGroup"))
   "List of supported buddy properties method."
   :group 'purple-buddy)
 
 (defcustom purple-buddy-indirect-props
-  '((presence		.	(active-status 	. "PurplePresenceGetActiveStatus"))
-    (active-status	.	(status 	. "PurpleStatusGetId"))
-    (group-id           .       (group		. "PurpleGroupGetName")))
+  '((presence	   . (active-status 	. "PurplePresenceGetActiveStatus"))
+    (active-status . (status	 	. "PurpleStatusGetId"))
+    (group-id      . (group		. "PurpleGroupGetName"))
+    (icon-id       . (icon 		. "PurpleBuddyIconGetData")))
   "List of indirected buddy properties method."
   :group 'purple-buddy)
 
@@ -86,12 +87,20 @@
 	(purple-call-method "PurpleFindBuddies" :int32 id ""))
   (purple-register-signals purple-buddy-signals))
 
+(defun purple-buddy-icon-from-data (data)
+  (with-temp-buffer
+    (mapc (rcurry 'insert-byte 1) data)
+    (create-image (buffer-string) (image-type-from-data (buffer-string)))))
+
 (defun purple-buddy-set-field (buddy field data)
-  (let ((value (if (eq field 'signed-on) (not (= 0 data)) data))
+  (let ((value (cond ((eq field 'signed-on) (not (= 0 data)))
+                     ((eq field 'icon) (purple-buddy-icon-from-data data))
+                     (data)))
 	(indirect (assoc-default field purple-buddy-indirect-props)))
     (if indirect
-	(purple-buddy-retreive-info buddy (car indirect)
-				    (cdr indirect) :int32 data)
+        (when (and (numberp data) (not (= 0 data)))
+          (purple-buddy-retreive-info buddy (car indirect)
+                                      (cdr indirect) :int32 data))
       (set-slot-value buddy field value)
       (run-hook-with-args 'purple-buddy-changed-hook buddy field value))))
 
