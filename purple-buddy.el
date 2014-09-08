@@ -100,7 +100,8 @@
 	:key (rcurry 'slot-value field) :test 'equal))
 
 (defun purple-buddy-eq (b1 b2)
-  (= (oref b1 id) (oref b2 id)))
+  (when (and (ple-buddy-p b1) (ple-buddy-p b2))
+    (= (oref b1 id) (oref b2 id))))
 
 (defun purple-buddy-retreive-info (buddy sym method &rest args)
   (apply 'purple-call-method-async method

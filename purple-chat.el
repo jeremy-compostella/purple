@@ -77,7 +77,8 @@
 	     (purple-chat-show-buffer chat))))
 
 (defun purple-chat-eq (c1 c2)
-  (= (oref c1 id) (oref c2 id)))
+  (when (and (ple-chat-p c1) (ple-chat-p c2))
+    (= (oref c1 id) (oref c2 id))))
 
 (defun purple-chat-find (field value &optional equal-fun)
   (let ((equal-fun (or equal-fun 'equal)))
