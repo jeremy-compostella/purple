@@ -88,9 +88,14 @@
   (purple-register-signals purple-buddy-signals))
 
 (defun purple-buddy-icon-from-data (data)
-  (with-temp-buffer
-    (mapc (rcurry 'insert-byte 1) data)
-    (create-image (buffer-string) (image-type-from-data (buffer-string)))))
+  (let ((file (make-temp-file "icon"))
+        (coding-system-for-write 'raw-text))
+    (with-current-buffer (find-file-noselect file)
+      (erase-buffer)
+      (mapc (rcurry 'insert-byte 1) data)
+      (save-buffer))
+    (shell-command (format "convert %s -resize 100x %s" file file))
+    (create-image file)))
 
 (defun purple-buddy-set-field (buddy field data)
   (let ((value (cond ((eq field 'signed-on) (not (= 0 data)))
