@@ -93,11 +93,12 @@
   (let ((buddy (oref purple-chat buddy)))
     (when buddy
       (setq header-line-format
-            (concat (capitalize (propertize (oref buddy status)
-                                            'face (purple-buddy-face buddy)))
-                    (if (oref buddy typingp)
-                        (concat " - " (oref buddy alias) " is typing")
-                        ""))))))
+            (list (if (oref buddy icon) (propertize "x" 'display (oref buddy icon)) "")
+                  (capitalize (propertize (oref buddy status)
+                                          'face (purple-buddy-face buddy)))
+                  (if (oref buddy typingp)
+                      (concat " - " (oref buddy alias) " is typing")
+                    ""))))))
 
 (defun purple-chat-buffer-create (chat)
   (with-current-buffer
