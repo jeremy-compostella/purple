@@ -132,7 +132,7 @@
     (let ((buf (current-buffer)))
       (with-temp-buffer
         (insert msg)
-        (shell-command-on-region (point-min) (point-max) "html2text" buf)))
+        (shell-command-on-region (point-min) (point-max) "html2text -utf8" buf)))
     (buffer-string)))
 
 (defun purple-chat-show-buffer (&optional chat)
