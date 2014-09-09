@@ -21,6 +21,7 @@
 
 (require 'purple-chat)
 (require 'purple-buddy)
+(require 'html2text)
 
 (defgroup purple-chat-buffer nil
   "Activity management group"
@@ -134,6 +135,7 @@
       (with-temp-buffer
         (insert msg)
         (shell-command-on-region (point-min) (point-max) "html2text -utf8" buf)))
+    (html2text)
     (buffer-string)))
 
 (defun purple-chat-show-buffer (&optional chat)
