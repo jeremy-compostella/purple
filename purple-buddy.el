@@ -92,12 +92,10 @@
 (defun purple-buddy-icon-from-data (data)
   (let ((file (make-temp-file "icon"))
         (coding-system-for-write 'raw-text))
-    (with-current-buffer (find-file-noselect file)
-      (erase-buffer)
+    (with-temp-buffer
       (mapc (rcurry 'insert-byte 1) data)
-      (save-buffer)
-      (kill-buffer (current-buffer)))
-    (shell-command (format "convert %s -resize 100x %s" file file))
+      (call-process-region (point-min) (point-max)
+			   "convert" nil nil nil "-" "-resize" "100x" file))
     (create-image file)))
 
 (defun purple-buddy-set-field (buddy field data)
