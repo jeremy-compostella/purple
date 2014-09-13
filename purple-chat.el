@@ -135,13 +135,15 @@
 		   purple-chats)))
 
 (defun purple-chat-received-im-msg-handler (account sender msg id flags)
-  (let* ((buddy (purple-buddy-find 'name sender))
+  (let* ((buddy (purple-buddy-find 'name sender
+				   (lambda (x y) (string-prefix-p y x))))
 	 (chat (or (purple-chat-find 'id id)
 		   (purple-chat-new buddy id))))
     (purple-chat-buffer-insert chat sender msg t)))
 
 (defun purple-chat-sent-im-msg-handler (account receiver msg)
-  (let* ((buddy (purple-buddy-find 'name receiver))
+  (let* ((buddy (purple-buddy-find 'name receiver
+				   (lambda (x y) (string-prefix-p y x))))
 	 (chat (purple-chat-find 'buddy buddy 'purple-buddy-eq)))
     (purple-chat-buffer-insert chat receiver msg nil)))
 

@@ -116,9 +116,9 @@ buffer."
 	(set-slot-value buddy field value)
 	(run-hook-with-args 'purple-buddy-changed-hook buddy field value)))))
 
-(defun purple-buddy-find (field value)
+(defun purple-buddy-find (field value &optional test)
   (find value purple-buddies
-	:key (rcurry 'slot-value field) :test 'equal))
+	:key (rcurry 'slot-value field) :test (if test test 'equal)))
 
 (defun purple-buddy-eq (b1 b2)
   (when (and (plp-buddy-p b1) (plp-buddy-p b2))
