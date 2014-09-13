@@ -82,6 +82,11 @@
   available, not-available and offline."
   :group 'purple-buddy)
 
+(defcustom purple-buddy-display-images t
+  "Enable the display of buddies images in the buddies list
+buffer."
+  :group 'purple-buddy)
+
 (defun purple-buddy-init-for-accounts (accounts)
   (setq purple-buddies '())
   (dolist (account accounts)
@@ -161,13 +166,14 @@
 
 ;; Interactive
 (define-derived-mode purple-buddies-mode tabulated-list-mode "Buddies"
-  (setq tabulated-list-format [("" 18 t)
-                               ("Alias" 30 t)
-			       ("Name" 40 t)
-			       ("Status" 10 t)
-			       ("Group" 20 t)
-			       ("Account" 20 t)])
-  (setq tabulated-list-sort-key (cons "Alias" nil))
+  (let ((icon-length (if purple-buddy-display-images 17 0)))
+    (setq tabulated-list-format (vector `("" ,icon-length t)
+					'("Alias" 30 t)
+					'("Name" 40 t)
+					'("Status" 10 t)
+					'("Group" 20 t)
+					'("Account" 20 t))
+	  tabulated-list-sort-key (cons "Alias" nil)))
   (tabulated-list-init-header)
   (add-hook 'tabulated-list-revert-hook 'purple-buddies-list nil t)
   (local-set-key (kbd "RET") 'purple-chat-with)
@@ -193,7 +199,7 @@
 	(purple-buddies-mode))
       (setq tabulated-list-entries nil)
       (dolist (buddy purple-buddies)
-	(push (list buddy (vector (if (oref buddy icon)
+	(push (list buddy (vector (if (and purple-buddy-display-images (oref buddy icon))
 				      (propertize "x" 'display (oref buddy icon))
 				    "")
                                   (oref buddy alias) (oref buddy name)
