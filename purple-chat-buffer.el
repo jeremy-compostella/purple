@@ -136,7 +136,7 @@
         (insert msg)
         (shell-command-on-region (point-min) (point-max) "html2text -utf8" buf)))
     (html2text)
-    (buffer-string)))
+    (replace-regexp-in-string " " " " (buffer-string))))
 
 (defun purple-chat-show-buffer (&optional chat)
   (interactive)

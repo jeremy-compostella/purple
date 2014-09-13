@@ -63,9 +63,9 @@
     ("BuddyRemoved"		.	purple-buddy-removed-handler)
     ("BuddyStatusChanged"	.	purple-buddy-status-handler)
     ("BuddySignedOn"		.	purple-buddy-signed-handler)
-    ("BuddySignedOff"		.	(rcurry 'purple-buddy-signed-handler t))
+    ("BuddySignedOff"		.	purple-buddy-signed-off-handler)
     ("BuddyTyping"		.	purple-buddy-typing-handler)
-    ("BuddyTypingStopped"	.	(rcurry 'purple-buddy-typing-handler t)))
+    ("BuddyTypingStopped"	.	purple-buddy-typing-stopped-handler))
   "List of supported buddy signals."
   :group 'purple-buddy)
 
@@ -145,13 +145,20 @@
   (purple-buddy-set-field (purple-buddy-find 'id id)
 			  'signed-on (if off 0 1)))
 
+(defun purple-buddy-signed-off-handler (id)
+  (purple-buddy-signed-handler id t))
+
 (defun purple-buddy-typing-handler (account-id name &optional status)
   (purple-buddy-set-field (purple-buddy-find 'name name)
 			  'typingp (not status)))
 
+(defun purple-buddy-typing-stopped-handler (account-id name)
+  (purple-buddy-typing-handler account-id name t))
+
 ;; Interactive
 (define-derived-mode purple-buddies-mode tabulated-list-mode "Buddies"
-  (setq tabulated-list-format [("Alias" 30 t)
+  (setq tabulated-list-format [("" 18 t)
+                               ("Alias" 30 t)
 			       ("Name" 40 t)
 			       ("Status" 10 t)
 			       ("Group" 20 t)])
@@ -181,7 +188,10 @@
 	(purple-buddies-mode))
       (setq tabulated-list-entries nil)
       (dolist (buddy purple-buddies)
-	(push (list buddy (vector (oref buddy alias) (oref buddy name)
+	(push (list buddy (vector (if (oref buddy icon)
+				      (propertize "x" 'display (oref buddy icon))
+				    "")
+                                  (oref buddy alias) (oref buddy name)
 				  (propertize (capitalize (oref buddy status))
 					      'face (purple-buddy-face buddy))
 				  (oref buddy group)))
