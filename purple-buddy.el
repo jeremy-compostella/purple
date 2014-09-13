@@ -134,7 +134,9 @@
 
 ;; Signals
 (defun purple-buddy-added-handler (id)
-  (purple-buddy-retreive-all-info id))
+  (purple-buddy-retreive-all-info
+   (purple-call-method "purpleBuddyGetAccount" :int32 id)
+   id))
 
 (defun purple-buddy-removed-handler (id)
   (setq purple-buddies
@@ -227,13 +229,14 @@ PROMPT is a string to prompt with."
 			(ido-completing-read prompt (purple-buddy-fancy-list)
 			 nil t nil 'purple-buddy-history)))))
 
-(defun purple-buddy-add (name alias group)
-  (interactive (list (read-string "Name: ")
+(defun purple-buddy-add (account name alias group)
+  (interactive (list (purple-account-completing-read)
+		     (read-string "Name: ")
 		     (read-string "Alias: ")
 		     (purple-group-completing-read "Add into group: ")))
-  (let* ((account (car purple-accounts))
-	 (id (purple-call-method "PurpleBuddyNew" :int32 account name alias)))
-    (purple-call-method "PurpleAccountAddBuddy" :int32 account :int32 id)
+  (let* ((account-id (oref account id))
+	 (id (purple-call-method "PurpleBuddyNew" :int32 account-id name alias)))
+    (purple-call-method "PurpleAccountAddBuddy" :int32 account-id :int32 id)
     (purple-call-method "PurpleBlistAddBuddy" :int32 id :int32 0
 			:int32 (oref group node) :int32 0)))
 
