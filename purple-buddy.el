@@ -100,16 +100,17 @@
     (create-image file)))
 
 (defun purple-buddy-set-field (buddy field data)
-  (let ((value (cond ((eq field 'signed-on) (not (= 0 data)))
-                     ((eq field 'icon) (purple-buddy-icon-from-data data))
-                     (data)))
-	(indirect (assoc-default field purple-buddy-indirect-props)))
-    (if indirect
-        (when (and (numberp data) (not (= 0 data)))
-          (purple-buddy-retreive-info buddy (car indirect)
-                                      (cdr indirect) :int32 data))
-      (set-slot-value buddy field value)
-      (run-hook-with-args 'purple-buddy-changed-hook buddy field value))))
+  (when buddy
+    (let ((value (cond ((eq field 'signed-on) (not (= 0 data)))
+		       ((eq field 'icon) (purple-buddy-icon-from-data data))
+		       (data)))
+	  (indirect (assoc-default field purple-buddy-indirect-props)))
+      (if indirect
+	  (when (and (numberp data) (not (= 0 data)))
+	    (purple-buddy-retreive-info buddy (car indirect)
+					(cdr indirect) :int32 data))
+	(set-slot-value buddy field value)
+	(run-hook-with-args 'purple-buddy-changed-hook buddy field value)))))
 
 (defun purple-buddy-find (field value)
   (find value purple-buddies
