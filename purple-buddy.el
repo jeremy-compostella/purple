@@ -82,10 +82,11 @@
   available, not-available and offline."
   :group 'purple-buddy)
 
-(defun purple-buddy-init-for-account (account)
+(defun purple-buddy-init-for-accounts (accounts)
   (setq purple-buddies '())
-  (mapc (curry 'purple-buddy-retreive-all-info account)
-	(purple-call-method "PurpleFindBuddies" :int32 (oref account id) ""))
+  (dolist (account accounts)
+    (mapc (curry 'purple-buddy-retreive-all-info account)
+	  (purple-call-method "PurpleFindBuddies" :int32 (oref account id) "")))
   (purple-register-signals purple-buddy-signals))
 
 (defun purple-buddy-icon-from-data (data)
