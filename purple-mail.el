@@ -22,10 +22,13 @@
 (require 'purple-buddy)
 
 (defun purple-mail-from-buddy (prompt)
-  (let ((buddy (purple-buddy-completing-read prompt)))
+  (let* ((buddy (purple-buddy-completing-read prompt))
+	 (name (slot-value buddy 'name)))
     (format "\"%s\" <%s>"
 	    (slot-value buddy 'alias)
-	    (substring (slot-value buddy 'name) 4))))
+	    (if (string-prefix-p "sip:" name)
+		(substring name 4)
+	      name))))
 
 (defun purple-mail-insert-buddy (prompt &optional separator)
   (insert (or separator "")
