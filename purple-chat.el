@@ -25,8 +25,8 @@
 (defvar purple-chats '())
 (defvar purple-chat-history '())
 
-(defgroup ple-chat nil
-  "Activity management group"
+(defgroup purple-chat nil
+  "Purple chat group."
   :group 'purple)
 
 (defclass ple-chat ()

@@ -24,7 +24,7 @@
 (require 'html2text)
 
 (defgroup purple-chat-buffer nil
-  "Activity management group"
+  "Purple chat buffer group."
   :group 'purple)
 
 (defcustom purple-chat-buffer-name-fmt "%s"

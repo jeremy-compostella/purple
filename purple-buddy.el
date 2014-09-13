@@ -24,18 +24,19 @@
 (require 'cl)
 
 (defgroup purple-buddy nil
-  "Activity management group"
+  "Purple buddy group."
   :group 'purple)
 
 (defvar purple-buddies '())
 (defvar purple-buddy-history '())
 
-(defclass ple-buddy ()
+(defclass plp-buddy ()
   ((id :type number :initarg id)
+   (account :initarg account)
    (name :initarg name :initform "")
    (alias :initarg alias :initform "")
    (signed-on :initarg signed-on :initform nil)
-   (status :initarg status :initform nil)
+   (status :initarg status :initform "unknown")
    (typingp :initarg typingp :initform nil)
    (group :initarg group :initform "")
    (icon :initarg icon :initform nil)))

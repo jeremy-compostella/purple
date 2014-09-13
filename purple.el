@@ -28,7 +28,7 @@
 (require 'purple-mail)
 
 (defgroup purple nil
-  "Activity management group"
+  "Purple group."
   :group 'applications)
 
 (defcustom purple-dbus-service "im.pidgin.purple.PurpleService"

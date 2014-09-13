@@ -22,7 +22,7 @@
 (require 'eieio)
 
 (defgroup purple-group nil
-  "Activity management group"
+  "Purple group group."
   :group 'purple)
 
 (defclass purple-group ()
