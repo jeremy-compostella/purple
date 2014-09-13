@@ -82,10 +82,10 @@
   available, not-available and offline."
   :group 'purple-buddy)
 
-(defun purple-buddy-init-for-account (id)
+(defun purple-buddy-init-for-account (account)
   (setq purple-buddies '())
-  (mapc 'purple-buddy-retreive-all-info
-	(purple-call-method "PurpleFindBuddies" :int32 id ""))
+  (mapc (curry 'purple-buddy-retreive-all-info account)
+	(purple-call-method "PurpleFindBuddies" :int32 (oref account id) ""))
   (purple-register-signals purple-buddy-signals))
 
 (defun purple-buddy-icon-from-data (data)
@@ -94,7 +94,8 @@
     (with-current-buffer (find-file-noselect file)
       (erase-buffer)
       (mapc (rcurry 'insert-byte 1) data)
-      (save-buffer))
+      (save-buffer)
+      (kill-buffer (current-buffer)))
     (shell-command (format "convert %s -resize 100x %s" file file))
     (create-image file)))
 
@@ -115,16 +116,16 @@
 	:key (rcurry 'slot-value field) :test 'equal))
 
 (defun purple-buddy-eq (b1 b2)
-  (when (and (ple-buddy-p b1) (ple-buddy-p b2))
+  (when (and (plp-buddy-p b1) (plp-buddy-p b2))
     (= (oref b1 id) (oref b2 id))))
 
 (defun purple-buddy-retreive-info (buddy sym method &rest args)
   (apply 'purple-call-method-async method
 	 (curry 'purple-buddy-set-field buddy sym) args))
 
-(defun purple-buddy-retreive-all-info (id)
+(defun purple-buddy-retreive-all-info (account id)
   (let ((buddy (or (purple-buddy-find 'id id)
-		   (ple-buddy id 'id id))))
+		   (plp-buddy id 'id id 'account account))))
     (add-to-list 'purple-buddies buddy t 'purple-buddy-eq)
     (dolist (prop purple-buddy-props)
       (purple-buddy-retreive-info buddy (car prop) (cdr prop) :int32 id))))
@@ -162,7 +163,8 @@
                                ("Alias" 30 t)
 			       ("Name" 40 t)
 			       ("Status" 10 t)
-			       ("Group" 20 t)])
+			       ("Group" 20 t)
+			       ("Account" 20 t)])
   (setq tabulated-list-sort-key (cons "Alias" nil))
   (tabulated-list-init-header)
   (add-hook 'tabulated-list-revert-hook 'purple-buddies-list nil t)
@@ -195,7 +197,8 @@
                                   (oref buddy alias) (oref buddy name)
 				  (propertize (capitalize (oref buddy status))
 					      'face (purple-buddy-face buddy))
-				  (oref buddy group)))
+				  (oref buddy group)
+				  (oref (oref buddy account) protocol)))
 	      tabulated-list-entries))
       (tabulated-list-print)
       (pop-to-buffer (current-buffer)))))
@@ -233,12 +236,11 @@ PROMPT is a string to prompt with."
 			:int32 (oref group node) :int32 0)))
 
 (defun purple-buddy-do-remove (buddy)
-  (let* ((account (car purple-accounts)) ;TODO: include account into
-					 ;buddy definition
+  (let* ((account (oref buddy account))
 	 (id (oref buddy id))
 	 (group (purple-call-method "PurpleBuddyGetGroup" :int32 id)))
     (purple-call-method "PurpleAccountRemoveBuddy"
-			:int32 account :int32 (oref buddy id)
+			:int32 (oref account id) :int32 (oref buddy id)
 			:int32 group)
     (purple-call-method "PurpleBlistRemoveBuddy" :int32 (oref buddy id))))
 

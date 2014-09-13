@@ -21,6 +21,7 @@
 
 (require 'dbus)
 
+(require 'purple-account)
 (require 'purple-buddy)
 (require 'purple-group)
 (require 'purple-chat)
@@ -42,8 +43,6 @@
 (defcustom purple-interface "im.pidgin.purple.PurpleInterface"
   "Purple interface name. Default value is for pidgin."
   :group 'purple)
-
-(defvar purple-accounts '())
 
 ;; Shared
 (defun purple-call-method (method &rest args)
@@ -67,16 +66,13 @@
 (defun purple-init ()
   "Initialize purple for Emacs."
   (interactive)
-  (setq purple-accounts (purple-account-list))
+  (purple-account-init)
   (unless purple-accounts
     (error "Purple seems turned off."))
   (mapc 'purple-buddy-init-for-account purple-accounts)
   (purple-group-init)
   (purple-chat-init)
   (purple-chat-buffer-init))
-
-(defun purple-account-list ()
-  (purple-call-method "PurpleAccountsGetAllActive"))
 
 ;; Tools
 (defsubst curry (function &rest arguments)

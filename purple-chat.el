@@ -29,7 +29,7 @@
   "Purple chat group."
   :group 'purple)
 
-(defclass ple-chat ()
+(defclass plp-chat ()
   ((id :type number :initarg id)
    (title :initarg title :initform "")
    (im :initarg im)
@@ -68,7 +68,7 @@
 (defun purple-chat-set-field (chat field value)
   (if (eq field 'name)
       (progn (set-slot-value chat 'buddy (or (purple-buddy-find 'name value)
-                                             (ple-buddy 0 'id 0 'name value)))
+                                             (plp-buddy 0 'id 0 'name value)))
              (run-hook-with-args 'purple-chat-changed-hook chat 'buddy value))
     (set-slot-value chat field value)
     (run-hook-with-args 'purple-chat-changed-hook chat field value))
@@ -77,7 +77,7 @@
 	     (purple-chat-show-buffer chat))))
 
 (defun purple-chat-eq (c1 c2)
-  (when (and (ple-chat-p c1) (ple-chat-p c2))
+  (when (and (plp-chat-p c1) (plp-chat-p c2))
     (= (oref c1 id) (oref c2 id))))
 
 (defun purple-chat-find (field value &optional equal-fun)
@@ -87,7 +87,7 @@
 
 (defun purple-chat-retreive-all-info (id)
   (let ((chat (or (purple-chat-find 'id id)
-		  (ple-chat id 'id id))))
+		  (plp-chat id 'id id))))
     (add-to-list 'purple-chats chat t 'purple-chat-eq)
     (dolist (prop purple-chat-props)
       (purple-call-method-async (cdr prop)
@@ -97,7 +97,7 @@
 
 (defun purple-chat-create (buddy &optional id props)
   (let* ((id (if id id 0))
-	 (chat (ple-chat id 'id id
+	 (chat (plp-chat id 'id id
 			 'title (oref buddy alias)
 			 'buddy buddy)))
     (add-to-list 'purple-chats chat t 'purple-chat-eq)
@@ -110,7 +110,7 @@
 (defun purple-chat-new (buddy &optional props)
   (setq purple-chats-open-next-created t)
   (purple-call-method "PurpleConversationNew" :int32 1
-		      :int32 (car purple-accounts) ;TODO: manage account pease !!!!
+		      :int32 (oref (oref buddy account) id)
 		      (oref buddy name)))
 
 (defun purple-chat-destroy (&optional chat)
