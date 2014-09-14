@@ -44,6 +44,9 @@
   "Purple interface name. Default value is for pidgin."
   :group 'purple)
 
+(defvar purple-dbus-register-objects '()
+  "List of dbus object obtained when registering signals. ")
+
 ;; Shared
 (defun purple-call-method (method &rest args)
   (apply 'dbus-call-method
@@ -59,16 +62,21 @@
 (defun purple-register-signals (signals)
   (dolist (sig signals)
     (let ((progress (make-progress-reporter (format "Registering signal %s" (car sig)))))
-      (dbus-register-signal :session purple-dbus-service ;TODO: unregister signals !!!
-			    purple-object purple-interface
-			    (car sig) (cdr sig))
+      (add-to-list 'purple-dbus-register-objects
+		   (dbus-register-signal :session purple-dbus-service
+					 purple-object purple-interface
+					 (car sig) (cdr sig)))
       (progress-reporter-done progress))))
 
 ;; Init
 (defun purple-init ()
   "Initialize purple for Emacs."
   (interactive)
+  (dolist (obj purple-dbus-register-objects)
+    (dbus-unregister-object obj))
+  (setq purple-dbus-register-objects '())
   (purple-account-init)
+  (purple-status-init)
   (purple-buddy-init-for-accounts purple-accounts)
   (purple-group-init)
   (purple-chat-init)
