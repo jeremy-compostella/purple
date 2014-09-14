@@ -20,7 +20,7 @@
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 (defgroup purple-account nil
-  "Activity management group"
+  "Purple account group."
   :group 'purple)
 
 (defvar purple-accounts '())
