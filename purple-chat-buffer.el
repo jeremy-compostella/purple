@@ -146,7 +146,8 @@
   (let ((chat (or chat
 		  (when (eq major-mode 'purple-chats-mode)
 		    (tabulated-list-get-id)))))
-    (pop-to-buffer (purple-chat-buffer-find-or-create chat))))
+    (pop-to-buffer (purple-chat-buffer-find-or-create chat))
+    (purple-chat-buffer-header-line)))
 
 (defun purple-chat-format-message (buddy-alias msg received)
     (apply 'propertize
