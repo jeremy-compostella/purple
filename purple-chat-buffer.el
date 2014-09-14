@@ -163,7 +163,7 @@
   (with-current-buffer (purple-chat-buffer-find-or-create chat)
     (save-excursion
       (let* ((inhibit-read-only t)
-	     (from-buddy (purple-buddy-find 'name from))
+	     (from-buddy (purple-buddy-find-by-name from))
 	     (buddy-alias (if received
 			     (if from-buddy (oref from-buddy alias) from)
 			   "Me")))

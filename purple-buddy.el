@@ -129,6 +129,9 @@ buffer."
   (find value purple-buddies
 	:key (rcurry 'slot-value field) :test (if test test 'equal)))
 
+(defun purple-buddy-find-by-name (value)
+  (purple-buddy-find 'name value (lambda (x y) (string-prefix-p y x))))
+
 (defun purple-buddy-eq (b1 b2)
   (when (and (plp-buddy-p b1) (plp-buddy-p b2))
     (= (oref b1 id) (oref b2 id))))
@@ -170,7 +173,7 @@ buffer."
   (purple-buddy-signed-handler id t))
 
 (defun purple-buddy-typing-handler (account-id name &optional status)
-  (purple-buddy-set-field (purple-buddy-find 'name name)
+  (purple-buddy-set-field (purple-buddy-find-by-name name)
 			  'typingp (not status)))
 
 (defun purple-buddy-typing-stopped-handler (account-id name)
