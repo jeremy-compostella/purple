@@ -97,7 +97,7 @@ buffer."
 		      0 (length buddies) i)))
       (dolist (id buddies)
 	(purple-buddy-retreive-all-info account id)
-	(progress-reporter-force-update progress i))
+	(progress-reporter-force-update progress (incf i)))
       (progress-reporter-done progress)))
   (purple-register-signals purple-buddy-signals)
   (add-hook 'purple-account-status-changed-hook
