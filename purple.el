@@ -22,6 +22,7 @@
 (require 'dbus)
 
 (require 'purple-account)
+(require 'purple-status)
 (require 'purple-buddy)
 (require 'purple-group)
 (require 'purple-chat)
