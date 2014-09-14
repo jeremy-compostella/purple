@@ -88,6 +88,7 @@
   "chat-mode"
   (local-set-key (kbd "RET") 'purple-chat-buffer-send-msg)
   (local-set-key (kbd "C-c q") 'quit-window)
+  (local-set-key (kbd "C-c C-k") 'kill-buffer) ;TODO: this does not work !!!
   (add-hook 'kill-buffer-hook 'purple-chat-buffer-kill))
 
 (defun purple-chat-buffer-header-line ()
@@ -95,8 +96,10 @@
     (when buddy
       (setq header-line-format
             (list (if (oref buddy icon) (propertize "x" 'display (oref buddy icon)) "")
-                  (capitalize (propertize (oref buddy status)
-                                          'face (purple-buddy-face buddy)))
+                  (if (oref buddy status)
+		      (capitalize (propertize (oref buddy status)
+					      'face (purple-buddy-face buddy)))
+		    "")
                   (if (oref buddy typingp)
                       (concat " - " (oref buddy alias) " is typing")
                     ""))))))
@@ -133,7 +136,7 @@
   (with-temp-buffer
     (let ((buf (current-buffer)))
       (with-temp-buffer
-        (insert msg)
+        (insert (replace-regexp-in-string "\r" "<br>" msg))
         (shell-command-on-region (point-min) (point-max) "html2text -utf8" buf)))
     (html2text)
     (replace-regexp-in-string " " " " (buffer-string))))

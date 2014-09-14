@@ -90,9 +90,18 @@ buffer."
 (defun purple-buddy-init-for-accounts (accounts)
   (setq purple-buddies '())
   (dolist (account accounts)
-    (mapc (curry 'purple-buddy-retreive-all-info account)
-	  (purple-call-method "PurpleFindBuddies" :int32 (oref account id) "")))
-  (purple-register-signals purple-buddy-signals))
+    (let* ((buddies (purple-call-method "PurpleFindBuddies" :int32 (oref account id) ""))
+	   (i 0)
+	   (progress (make-progress-reporter
+		      (format "Loading buddies for %s" (oref account name))
+		      0 (length buddies) i)))
+      (dolist (id buddies)
+	(purple-buddy-retreive-all-info account id)
+	(progress-reporter-force-update progress i))
+      (progress-reporter-done progress)))
+  (purple-register-signals purple-buddy-signals)
+  (add-hook 'purple-account-status-changed-hook
+	    'purple-buddy-account-status-changed))
 
 (defun purple-buddy-icon-from-data (data)
   (let ((file (make-temp-file "icon"))
@@ -151,8 +160,11 @@ buffer."
 			  'active-status status))
 
 (defun purple-buddy-signed-handler (id &optional off)
-  (purple-buddy-set-field (purple-buddy-find 'id id)
-			  'signed-on (if off 0 1)))
+  (let ((buddy (purple-buddy-find 'id id)))
+    (purple-buddy-set-field buddy 'signed-on (if off 0 1))
+    (unless off
+      (purple-buddy-retreive-all-info (oref buddy account)
+				      (oref buddy id)))))
 
 (defun purple-buddy-signed-off-handler (id)
   (purple-buddy-signed-handler id t))
@@ -163,6 +175,14 @@ buffer."
 
 (defun purple-buddy-typing-stopped-handler (account-id name)
   (purple-buddy-typing-handler account-id name t))
+
+;; Hook
+(defun purple-buddy-account-status-changed (account)
+  (let ((buddies (remove-if-not (lambda (x)
+				  (purple-account-eq account (oref x account)))
+				purple-buddies)))
+    (cond ((eq 'signed-off (oref account status))
+	   (mapc (rcurry 'set-slot-value 'status "offline") buddies)))))
 
 ;; Interactive
 (define-derived-mode purple-buddies-mode tabulated-list-mode "Buddies"

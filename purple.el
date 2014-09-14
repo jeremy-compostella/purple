@@ -58,9 +58,11 @@
 
 (defun purple-register-signals (signals)
   (dolist (sig signals)
-    (dbus-register-signal :session purple-dbus-service
-			  purple-object purple-interface
-			  (car sig) (cdr sig))))
+    (let ((progress (make-progress-reporter (format "Registering signal %s" (car sig)))))
+      (dbus-register-signal :session purple-dbus-service ;TODO: unregister signals !!!
+			    purple-object purple-interface
+			    (car sig) (cdr sig))
+      (progress-reporter-done progress))))
 
 ;; Init
 (defun purple-init ()

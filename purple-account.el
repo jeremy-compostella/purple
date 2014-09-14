@@ -44,6 +44,9 @@
   "List of supported account signals."
   :group 'purple-buddy)
 
+(defvar purple-account-status-changed-hook '()
+  "Hook list runned when an account status has changed.")
+
 (defun purple-account-eq (a1 a2)
   (when (and (plp-account-p a1) (plp-account-p a2))
     (= (oref a1 id) (oref a2 id))))
@@ -75,23 +78,38 @@
 		    ((eq (oref account status) 'signed-off) 'error))))
 
 ;; Signals
+(defun purple-account-set-status (id status)
+  (let ((account (purple-account-find 'id id)))
+    (set-slot-value account 'status status)
+    (message "%s status is now %s" (purple-account-propertize account)
+	     (capitalize (symbol-name status)))
+    (run-hook-with-args 'purple-account-status-changed-hook account)))
+
 (defun purple-account-signed-on-handler (id)
-  (set-slot-value (purple-account-find 'id id) 'status 'signed-on))
+  (purple-account-set-status id 'signed-on))
 
 (defun purple-account-signed-off-handler (id)
-  (set-slot-value (purple-account-find 'id id) 'status 'signed-off))
+  (purple-account-set-status id 'signed-off))
 
 (defun purple-account-connecting-handler (id)
-  (set-slot-value (purple-account-find 'id id) 'status 'connecting))
+  (purple-account-set-status id 'connecting))
 
 ;; Interatives
-(defun purple-account-connect (account)
-  (interactive (purple-account-completing-read))
+(defun purple-account-sign-on (account)
+  (interactive (list (purple-account-completing-read)))
   (purple-call-method "PurpleAccountConnect" :int32 (oref account id)))
 
-(defun purple-account-disconnect (account)
-  (interactive (purple-account-completing-read))
+(defun purple-account-sign-on-all ()
+  (interactive)
+  (mapc 'purple-account-sign-on purple-accounts))
+
+(defun purple-account-sign-off (account)
+  (interactive (list (purple-account-completing-read)))
   (purple-call-method "PurpleAccountDisconnect" :int32 (oref account id)))
+
+(defun purple-account-sign-off-all ()
+  (interactive)
+  (mapc 'purple-account-sign-off purple-accounts))
 
 (defun purple-account-completing-read (&optional prompt)
   "Read a string in the minibuffer with ido-style completion to
