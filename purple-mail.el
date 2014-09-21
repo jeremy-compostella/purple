@@ -76,6 +76,6 @@
 	(when (yes-or-no-p (format "Are you sure you want to add buddy \"%s\" <%s> ?"
 				   alias name))
 	  (purple-buddy-add account name alias group)))
-    (purple-buddy-add)))
+    (call-interactively 'purple-buddy-add)))
 
 (provide 'purple-mail)
