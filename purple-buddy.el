@@ -185,7 +185,7 @@ buffer."
 				  (purple-account-eq account (oref x account)))
 				purple-buddies)))
     (cond ((eq 'signed-off (oref account status))
-	   (mapc (rcurry 'set-slot-value 'status "offline") buddies)))))
+	   (mapc (rcurry 'purple-buddy-set-field 'status "offline") buddies)))))
 
 ;; Interactive
 (define-derived-mode purple-buddies-mode tabulated-list-mode "Buddies"
