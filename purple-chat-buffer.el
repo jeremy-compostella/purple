@@ -136,8 +136,8 @@
   (with-temp-buffer
     (let ((buf (current-buffer)))
       (with-temp-buffer
-        (insert (replace-regexp-in-string "\r" "<br>" msg))
-        (call-process-region (point-min) (point-max) "html2text" "-utf8" buf)))
+        (insert (replace-regexp-in-string "\n" "<br>" msg))
+        (call-process-region (point-min) (point-max) "html2text" nil buf nil "-utf8")))
     (html2text)
     (replace-regexp-in-string " " " " (buffer-string))))
 
