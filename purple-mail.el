@@ -71,10 +71,11 @@
       (let* ((buddy (ido-completing-read "Buddy data: " (purple-mail-extract-fields)))
 	     (alias (progn (string-match "\"\\\(.*\\\)\"" buddy) (match-string 1 buddy)))
 	     (name (progn (string-match "<\\\([^>]+\\\)*" buddy) (match-string 1 buddy)))
+	     (account (purple-account-completing-read))
 	     (group (purple-group-completing-read)))
 	(when (yes-or-no-p (format "Are you sure you want to add buddy \"%s\" <%s> ?"
 				   alias name))
-	  (purple-buddy-add name alias group)))
+	  (purple-buddy-add account name alias group)))
     (purple-buddy-add)))
 
 (provide 'purple-mail)
