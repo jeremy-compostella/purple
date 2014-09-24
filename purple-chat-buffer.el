@@ -150,15 +150,13 @@
     (purple-chat-buffer-header-line)))
 
 (defun purple-chat-format-message (buddy-alias msg received)
-    (apply 'propertize
-	   (format "[%s] %s> %s"
-		   (format-time-string purple-chat-buffer-time-fmt)
-		   buddy-alias
-		   (purple-chat-wash-msg msg))
-	   'face (if received
-		     'purple-chat-received-face
-		   'purple-chat-wrote-face)
-	   purple-chat-buffer-properties))
+  (concat (apply 'propertize
+		 (format "[%s] %s> "
+			 (format-time-string purple-chat-buffer-time-fmt)
+			 buddy-alias)
+		 'face (if received 'purple-chat-received-face 'purple-chat-wrote-face)
+		 purple-chat-buffer-properties)
+	  (apply 'propertize (purple-chat-wash-msg msg) purple-chat-buffer-properties)))
 
 (defun purple-chat-buffer-insert (chat from msg received)
   (with-current-buffer (purple-chat-buffer-find-or-create chat)
