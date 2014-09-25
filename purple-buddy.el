@@ -198,9 +198,9 @@ buffer."
   (local-set-key (kbd "RET") 'purple-chat-with)
   (local-set-key (kbd "l") 'recenter-top-bottom)
   (local-set-key (kbd "a") 'purple-buddy-add)
-  (local-set-key (kbd "r") 'purple-buddy-remove)
+  (local-set-key (kbd "d") 'purple-buddy-delete)
   (local-set-key (kbd "G a") 'purple-group-add)
-  (local-set-key (kbd "G r") 'purple-group-remove)
+  (local-set-key (kbd "G d") 'purple-group-delete)
   (toggle-read-only t))
 
 (defun purple-buddy-face (buddy)
@@ -276,7 +276,7 @@ PROMPT is a string to prompt with."
 			:int32 group)
     (purple-call-method "PurpleBlistRemoveBuddy" :int32 (oref buddy id))))
 
-(defun purple-buddy-remove (buddy)
+(defun purple-buddy-delete (buddy)
   (interactive (list (purple-buddy-completing-read)))
   (if (eq major-mode 'purple-buddies-mode)
       (when (yes-or-no-p (format "Are you sure you want to remove %s buddy ?"

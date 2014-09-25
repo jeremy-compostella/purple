@@ -88,7 +88,7 @@
 	(node (purple-call-method "PurpleBlistGetRoot")))
     (purple-call-method "PurpleBlistAddGroup" :int32 id :int32 0)))
 
-(defun purple-group-remove (group)
+(defun purple-group-delete (group)
   (interactive (list (purple-group-completing-read)))
   (purple-call-method "PurpleBlistRemoveGroup" :int32 (oref group node)))
 
