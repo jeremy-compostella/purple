@@ -163,11 +163,7 @@ buffer."
 			  'active-status status))
 
 (defun purple-buddy-signed-handler (id &optional off)
-  (let ((buddy (purple-buddy-find 'id id)))
-    (purple-buddy-set-field buddy 'signed-on (if off 0 1))
-    (unless off
-      (purple-buddy-retreive-all-info (oref buddy account)
-				      (oref buddy id)))))
+  (purple-buddy-added-handler id))
 
 (defun purple-buddy-signed-off-handler (id)
   (purple-buddy-signed-handler id t))
