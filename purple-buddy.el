@@ -209,6 +209,21 @@ buffer."
 	  ((string= status "offline") (nth 2 purple-buddy-faces))
 	  ((identity (nth 1 purple-buddy-faces))))))
 
+(defun purple-buddies-populate (buffer)
+  "Update purple-buddies buffer"
+  (setq tabulated-list-entries nil)
+  (dolist (buddy purple-buddies)
+    (push (list buddy (vector (if (and purple-buddy-display-images (oref buddy icon))
+				  (propertize "x" 'display (oref buddy icon))
+				"")
+			      (oref buddy alias) (oref buddy name)
+			      (propertize (capitalize (oref buddy status))
+					  'face (purple-buddy-face buddy))
+			      (oref buddy group)
+			      (oref (oref buddy account) protocol)))
+	  tabulated-list-entries))
+  (tabulated-list-print))
+
 (defun purple-buddies-list ()
   "Display a list of all buddies"
   (interactive)
@@ -216,18 +231,7 @@ buffer."
     (let ((inhibit-read-only t))
       (unless (eq major-mode 'purple-buddies-mode)
 	(purple-buddies-mode))
-      (setq tabulated-list-entries nil)
-      (dolist (buddy purple-buddies)
-	(push (list buddy (vector (if (and purple-buddy-display-images (oref buddy icon))
-				      (propertize "x" 'display (oref buddy icon))
-				    "")
-                                  (oref buddy alias) (oref buddy name)
-				  (propertize (capitalize (oref buddy status))
-					      'face (purple-buddy-face buddy))
-				  (oref buddy group)
-				  (oref (oref buddy account) protocol)))
-	      tabulated-list-entries))
-      (tabulated-list-print)
+      (purple-buddies-populate (current-buffer))
       (pop-to-buffer (current-buffer)))))
 
 (defun purple-buddy-propertize (buddy)
@@ -277,7 +281,8 @@ PROMPT is a string to prompt with."
   (if (eq major-mode 'purple-buddies-mode)
       (when (yes-or-no-p (format "Are you sure you want to remove %s buddy ?"
 				 (oref buddy alias)))
-	(purple-buddy-do-remove buddy))
+	(purple-buddy-do-remove buddy)
+	(purple-buddies-populate (current-buffer)))
     (purple-buddy-do-remove buddy)))
 
 (provide 'purple-buddy)
