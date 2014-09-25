@@ -86,8 +86,10 @@
 	  :key (rcurry 'slot-value field) :test equal-fun)))
 
 (defun purple-chat-retreive-all-info (id)
-  (let ((chat (or (purple-chat-find 'id id)
+  (let ((chat (or (purple-chat-find 'id 0)
+		  (purple-chat-find 'id id)
 		  (plp-chat id 'id id))))
+    (set-slot-value chat 'id id)
     (add-to-list 'purple-chats chat t 'purple-chat-eq)
     (dolist (prop purple-chat-props)
       (purple-call-method-async (cdr prop)
@@ -95,19 +97,9 @@
 				:int32 id))
     chat))
 
-(defun purple-chat-create (buddy &optional id props)
-  (let* ((id (if id id 0))
-	 (chat (plp-chat id 'id id
-			 'title (oref buddy alias)
-			 'buddy buddy)))
-    (add-to-list 'purple-chats chat t 'purple-chat-eq)
-    (dolist (prop props)
-      (set-slot-value chat (car props) (cdr props)))
-    chat))
-
 (defvar purple-chats-open-next-created nil)
 
-(defun purple-chat-new (buddy &optional props)
+(defun purple-chat-new (buddy)
   (setq purple-chats-open-next-created t)
   (purple-call-method "PurpleConversationNew" :int32 1
 		      :int32 (oref (oref buddy account) id)
@@ -136,8 +128,17 @@
 
 (defun purple-chat-received-im-msg-handler (account sender msg id flags)
   (let* ((buddy (purple-buddy-find-by-name sender))
-	 (chat (or (purple-chat-find 'id id)
-		   (purple-chat-new buddy id))))
+	 (chat (purple-chat-find 'id id)))
+    (when (not chat)			; Chat will be created in a minute
+      (setq chat (plp-chat id 'id 0))
+      (add-to-list 'purple-chats chat t 'purple-chat-eq))
+    (when (not buddy)
+      (let ((buddy-id (purple-call-method "PurpleBuddyNew" :int32 account sender sender)))
+	(purple-buddy-retreive-all-info (purple-account-find 'id account) buddy-id)
+	(setq buddy (purple-buddy-find 'id buddy-id))))
+    (when (zerop (oref chat id))
+      (set-slot-value chat 'title (oref buddy alias)))
+    (set-slot-value chat 'buddy buddy)
     (purple-chat-buffer-insert chat sender msg t)))
 
 (defun purple-chat-sent-im-msg-handler (account receiver msg)
