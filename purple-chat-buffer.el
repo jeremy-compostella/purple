@@ -62,6 +62,8 @@
 (defvar-local purple-chat-input-marker nil)
 
 (defvar-local purple-chat-msg-history '())
+(defvar-local purple-chat-msg-history-cur 0)
+(defvar-local purple-chat-msg-current "")
 
 (defun purple-chat-buffer-init ()
   (add-hook 'purple-buddy-changed-hook
@@ -87,6 +89,8 @@
 (define-derived-mode purple-chat-mode fundamental-mode
   "chat-mode"
   (local-set-key (kbd "RET") 'purple-chat-buffer-send-msg)
+  (local-set-key (kbd "M-p") 'purple-chat-buffer-prev-msg)
+  (local-set-key (kbd "M-n") 'purple-chat-buffer-next-msg)
   (local-set-key (kbd "C-c q") 'quit-window)
   (local-set-key (kbd "C-c C-k") 'kill-buffer) ;TODO: this does not work !!!
   (add-hook 'kill-buffer-hook 'purple-chat-buffer-kill))
@@ -169,13 +173,42 @@
 	(goto-char (marker-position purple-chat-sep-marker))
 	(insert-before-markers (purple-chat-format-message buddy-alias msg received))))))
 
+(defun purple-chat-buffer-replace-msg (msg)
+  (delete-region (marker-position purple-chat-input-marker) (point-max))
+  (save-excursion
+    (goto-char (marker-position purple-chat-input-marker))
+    (insert msg)))
+
+(defun purple-chat-buffer-extract-msg ()
+  (delete-and-extract-region (marker-position purple-chat-input-marker)
+			     (point-max)))
+
 ;; Interactive
 (defun purple-chat-buffer-send-msg ()
   (interactive)
-  (let ((msg (delete-and-extract-region
-	      (marker-position purple-chat-input-marker)
-	      (point-max))))
+  (let ((msg (purple-chat-buffer-extract-msg)))
     (when (> (length msg) 0)
+      (add-to-list 'purple-chat-msg-history msg)
+      (setq purple-chat-msg-history-cur 0
+	    purple-chat-msg-saved nil)
       (purple-chat-send-im purple-chat msg))))
+
+(defun purple-chat-history-move (n)
+  (when purple-chat-msg-history
+    (let ((cur (+ purple-chat-msg-history-cur n)))
+      (when (and (>= cur 0) (<= cur (length purple-chat-msg-history)))
+	(when (zerop purple-chat-msg-history-cur)
+	  (setq purple-chat-msg-current (purple-chat-buffer-extract-msg)))
+	(cond ((= cur 0) (purple-chat-buffer-replace-msg purple-chat-msg-current))
+	      ((purple-chat-buffer-replace-msg (nth (1- cur) purple-chat-msg-history))))
+	(incf purple-chat-msg-history-cur n)))))
+
+(defun purple-chat-buffer-prev-msg ()
+  (interactive)
+  (purple-chat-history-move +1))
+
+(defun purple-chat-buffer-next-msg ()
+  (interactive)
+  (purple-chat-history-move -1))
 
 (provide 'purple-chat-buffer)
