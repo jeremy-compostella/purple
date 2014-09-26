@@ -199,8 +199,9 @@
       (when (and (>= cur 0) (<= cur (length purple-chat-msg-history)))
 	(when (zerop purple-chat-msg-history-cur)
 	  (setq purple-chat-msg-current (purple-chat-buffer-extract-msg)))
-	(cond ((= cur 0) (purple-chat-buffer-replace-msg purple-chat-msg-current))
-	      ((purple-chat-buffer-replace-msg (nth (1- cur) purple-chat-msg-history))))
+	(purple-chat-buffer-replace-msg (if (zerop cur)
+					    purple-chat-msg-current
+					  (nth (1- cur) purple-chat-msg-history)))
 	(incf purple-chat-msg-history-cur n)))))
 
 (defun purple-chat-buffer-prev-msg ()
