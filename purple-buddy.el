@@ -244,7 +244,8 @@ buffer."
 
 (defun purple-buddy-completing-read (&optional prompt)
   "Read a string in the minibuffer with ido-style completion to
-select a buddy.
+select a buddy. If you enter a new buddy name, it will
+dynamically create the buddy.
 PROMPT is a string to prompt with."
   (interactive)
   (let ((prompt (or prompt "Buddy: ")))
@@ -252,9 +253,18 @@ PROMPT is a string to prompt with."
 	(let ((buddy (tabulated-list-get-id)))
 	  (add-to-list 'purple-buddy-history (slot-value buddy 'alias))
 	  buddy)
-      (purple-buddy-find 'alias
-			(ido-completing-read prompt (purple-buddy-fancy-list)
-			 nil t nil 'purple-buddy-history)))))
+      (let* ((buddy-alias (ido-completing-read prompt (purple-buddy-fancy-list)
+					       nil nil nil 'purple-buddy-history))
+	     (buddy (purple-buddy-find 'alias buddy-alias)))
+	(if buddy
+	    buddy
+	  (purple-buddy-create (purple-account-completing-read)
+			       buddy-alias))))))
+
+(defun purple-buddy-create (account name)
+  (let ((id (purple-call-method "PurpleBuddyNew" :int32 (oref account id) name name)))
+    (purple-buddy-retreive-all-info account id)
+    (purple-buddy-find 'id id)))
 
 (defun purple-buddy-add (account name alias group)
   (interactive (list (purple-account-completing-read)
