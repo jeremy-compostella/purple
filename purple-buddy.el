@@ -147,6 +147,10 @@ buffer."
     (dolist (prop purple-buddy-props)
       (purple-buddy-retreive-info buddy (car prop) (cdr prop) :int32 id))))
 
+(defun purple-buddy-display-images-p ()
+  (and purple-buddy-display-images
+       (delq nil (mapcar (rcurry 'slot-value 'icon) purple-buddies))))
+
 ;; Signals
 (defun purple-buddy-added-handler (id)
   (purple-buddy-retreive-all-info
@@ -185,7 +189,7 @@ buffer."
 
 ;; Interactive
 (define-derived-mode purple-buddies-mode tabulated-list-mode "Buddies"
-  (let ((icon-length (if purple-buddy-display-images 17 0)))
+  (let ((icon-length (if (purple-buddy-display-images-p) 17 0)))
     (setq tabulated-list-format (vector `("" ,icon-length t)
 					'("Alias" 30 t)
 					'("Name" 40 t)
@@ -212,17 +216,18 @@ buffer."
 (defun purple-buddies-populate (buffer)
   "Update purple-buddies buffer"
   (setq tabulated-list-entries nil)
-  (dolist (buddy purple-buddies)
-    (push (list buddy (vector (if (and purple-buddy-display-images (oref buddy icon))
-				  (propertize "x" 'display (oref buddy icon))
-				"")
-			      (oref buddy alias) (oref buddy name)
-			      (propertize (capitalize (oref buddy status))
-					  'face (purple-buddy-face buddy))
-			      (oref buddy group)
-			      (oref (oref buddy account) protocol)))
-	  tabulated-list-entries))
-  (tabulated-list-print))
+  (let ((display-images (purple-buddy-display-images-p)))
+    (dolist (buddy purple-buddies)
+      (push (list buddy (vector (if (and display-images (oref buddy icon))
+				    (propertize "x" 'display (oref buddy icon))
+				  "")
+				(oref buddy alias) (oref buddy name)
+				(propertize (capitalize (oref buddy status))
+					    'face (purple-buddy-face buddy))
+				(oref buddy group)
+				(oref (oref buddy account) protocol)))
+	    tabulated-list-entries))
+    (tabulated-list-print)))
 
 (defun purple-buddies-list ()
   "Display a list of all buddies"
