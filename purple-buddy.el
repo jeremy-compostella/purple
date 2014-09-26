@@ -267,6 +267,11 @@ PROMPT is a string to prompt with."
     (purple-call-method "PurpleBlistAddBuddy" :int32 id :int32 0
 			:int32 (oref group node) :int32 0)))
 
+(defun def-purple-ldap-browser ()
+  "Load ldap-browser plugins"
+  (define-key purple-buddies-mode-map (kbd "A") 'ldap-browser-add-purple-buddy))
+(eval-after-load "ldap-browser" '(def-purple-ldap-browser))
+
 (defun purple-buddy-do-remove (buddy)
   (let* ((account (oref buddy account))
 	 (id (oref buddy id))
