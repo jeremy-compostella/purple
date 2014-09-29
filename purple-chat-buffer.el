@@ -151,7 +151,8 @@
 		  (when (eq major-mode 'purple-chats-mode)
 		    (tabulated-list-get-id)))))
     (pop-to-buffer (purple-chat-buffer-find-or-create chat))
-    (purple-chat-buffer-header-line)))
+    (purple-chat-buffer-header-line)
+    (set-slot-value purple-chat 'unread 0)))
 
 (defun purple-chat-format-message (buddy-alias msg received)
   (concat (apply 'propertize
@@ -171,7 +172,10 @@
 			     (if from-buddy (oref from-buddy alias) from)
 			   "Me")))
 	(goto-char (marker-position purple-chat-sep-marker))
-	(insert-before-markers (purple-chat-format-message buddy-alias msg received))))))
+	(insert-before-markers (purple-chat-format-message buddy-alias msg received))
+	(if (get-buffer-window (current-buffer))
+	    (set-slot-value purple-chat 'unread 0)
+	  (set-slot-value purple-chat 'unread (1+ (oref purple-chat unread))))))))
 
 (defun purple-chat-buffer-replace-msg (msg)
   (delete-region (marker-position purple-chat-input-marker) (point-max))
