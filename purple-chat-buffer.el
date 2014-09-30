@@ -69,7 +69,15 @@
   (add-hook 'purple-buddy-changed-hook
 	    'purple-chat-buffer-buddy-has-changed)
   (add-hook 'purple-chat-changed-hook
-	    'purple-chat-buffer-chat-has-changed))
+	    'purple-chat-buffer-chat-has-changed)
+  (dolist (buf (purple-chat-buffers))
+    (with-current-buffer buf
+      (let* ((chat (and purple-chat (purple-chat-find 'id (oref purple-chat id))))
+	     (buddy (and chat (oref chat buddy))))
+	(when chat
+	  (setq purple-chat chat))
+	(when buddy
+	  (purple-chat-buffer-header-line))))))
 
 (defun purple-chat-buffer-chat-has-changed (chat &optional field value)
   (let ((buf (purple-chat-buffer-find chat)))
