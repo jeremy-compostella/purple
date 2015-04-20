@@ -54,7 +54,7 @@
 (defun purple-group-retreive-info (node type)
   (when (= 0 type)
     (let ((group (or (purple-group-find 'node node)
-		     (purple-group node 'node node))))
+		     (purple-group 'node node))))
       (add-to-list 'purple-groups group t 'purple-group-eq)
       (purple-call-method-async "PurpleGroupGetName"
 				(curry 'set-slot-value group 'name)

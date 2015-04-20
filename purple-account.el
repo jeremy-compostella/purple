@@ -54,7 +54,7 @@
 (defun purple-account-init ()
   (setq purple-accounts '())
   (dolist (id (purple-call-method "PurpleAccountsGetAllActive"))
-    (let ((account (plp-account id 'id id)))
+    (let ((account (plp-account 'id id)))
       (add-to-list 'purple-accounts account t 'purple-account-eq)
       (dolist (prop purple-account-props)
 	(set-slot-value account (car prop)

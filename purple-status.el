@@ -71,7 +71,7 @@
 
 (defun purple-status-retreive-info (id)
   (let ((status (or (purple-status-find 'id id)
-		    (plp-status id 'id id))))
+		    (plp-status 'id id))))
     (add-to-list 'purple-status status t 'purple-status-eq)
     (dolist (prop purple-status-props)
       (purple-call-method-async (cdr prop)

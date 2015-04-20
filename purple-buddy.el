@@ -142,7 +142,7 @@ buffer."
 
 (defun purple-buddy-retreive-all-info (account id)
   (let ((buddy (or (purple-buddy-find 'id id)
-		   (plp-buddy id 'id id 'account account))))
+		   (plp-buddy 'id id 'account account))))
     (add-to-list 'purple-buddies buddy t 'purple-buddy-eq)
     (dolist (prop purple-buddy-props)
       (purple-buddy-retreive-info buddy (car prop) (cdr prop) :int32 id))))
