@@ -88,7 +88,7 @@
 (defun purple-chat-retreive-all-info (id)
   (let ((chat (or (purple-chat-find 'id 0)
 		  (purple-chat-find 'id id)
-		  (plp-chat id 'id id))))
+		  (plp-chat 'id id))))
     (set-slot-value chat 'id id)
     (add-to-list 'purple-chats chat t 'purple-chat-eq)
     (dolist (prop purple-chat-props)
