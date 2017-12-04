@@ -161,7 +161,8 @@ enabled."
         (insert (replace-regexp-in-string "\n" "<br>" msg))
         (call-process-region (point-min) (point-max) "html2text" nil buf nil "-utf8")))
     (html2text)
-    (replace-regexp-in-string " " " " (buffer-string))))
+    (replace-regexp-in-string "^,s?a?n?s?-?serif; color:.*;\">" ""
+			      (replace-regexp-in-string " " " " (buffer-string)))))
 
 (defun purple-chat-show-buffer (&optional chat)
   (interactive)
