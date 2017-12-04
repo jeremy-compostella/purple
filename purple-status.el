@@ -91,6 +91,14 @@
 		  purple-status)))
     (mapcar (rcurry 'slot-value msg) status)))
 
+(defun purple-status-get ()
+  (let ((status (purple-status-find 'id (purple-call-method "PurpleSavedstatusGetCurrent"))))
+    (propertize (concat (symbol-name (oref status typ))
+			" - "
+			(oref status title))
+		'face (assoc-default (oref status typ) purple-status-order))))
+
+;; Interactive
 (defun purple-status-completing-read ()
   "Read a string in the minibuffer with ido-style completion to
 select a status.
@@ -106,13 +114,5 @@ PROMPT is a string to prompt with."
   (interactive)
   (let ((status (purple-status-completing-read)))
     (purple-call-method "PurpleSavedstatusActivate" :int32 (oref status id))))
-
-(defun purple-status-get ()
-  (interactive)
-  (let ((status (purple-status-find 'id (purple-call-method "PurpleSavedstatusGetCurrent"))))
-    (message (propertize (concat (symbol-name (oref status typ))
-				 " - "
-				 (oref status title))
-			 'face (assoc-default (oref status typ) purple-status-order)))))
 
 (provide 'purple-status)
