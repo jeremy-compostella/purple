@@ -201,9 +201,8 @@ enabled."
 
 (defun purple-chat-buffer-replace-msg (msg)
   (delete-region (marker-position purple-chat-input-marker) (point-max))
-  (save-excursion
-    (goto-char (marker-position purple-chat-input-marker))
-    (insert msg)))
+  (goto-char (marker-position purple-chat-input-marker))
+  (insert msg))
 
 (defun purple-chat-buffer-extract-msg ()
   (delete-and-extract-region (marker-position purple-chat-input-marker)
