@@ -27,6 +27,12 @@
   "Purple chat buffer group."
   :group 'purple)
 
+(defcustom purple-chat-buffer-use-ispell nil
+  "When set, at buffer creation, flyspell-mode will be
+enabled."
+  :group 'purple-chat-buffer
+  :type 'boolean)
+
 (defcustom purple-chat-buffer-name-fmt "%s"
   "Purple chat buffer name format."
   :group 'purple-chat-buffer)
@@ -121,14 +127,17 @@
       (get-buffer-create
        (format purple-chat-buffer-name-fmt
 	       (oref chat title)))
-    (purple-chat-mode)
-    (setq default-directory (getenv "HOME")
-          purple-chat chat
-	  purple-chat-sep-marker (point-marker))
-    (insert (propertize purple-chat-separator
-			'read-only t 'front-sticky t 'rear-nonsticky t))
-    (setq purple-chat-input-marker (point-marker))
-    (current-buffer)))
+    (unless (eq major-mode 'purple-chat-mode)
+      (purple-chat-mode)
+      (when purple-chat-buffer-use-ispell
+	(flyspell-mode))
+      (setq default-directory (getenv "HOME")
+	    purple-chat chat
+	    purple-chat-sep-marker (point-marker))
+      (insert (propertize purple-chat-separator
+			  'read-only t 'front-sticky t 'rear-nonsticky t))
+      (setq purple-chat-input-marker (point-marker))
+      (current-buffer))))
 
 (defun purple-chat-buffers ()		;TODO: Make a variable
   (delete-if-not (curry 'eq 'purple-chat-mode)
