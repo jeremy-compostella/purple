@@ -106,6 +106,7 @@ enabled."
   (local-set-key (kbd "M-p") 'purple-chat-buffer-prev-msg)
   (local-set-key (kbd "M-n") 'purple-chat-buffer-next-msg)
   (local-set-key (kbd "C-c q") 'quit-window)
+  (local-set-key (kbd "C-c C-o") 'browse-url)
   (local-set-key (kbd "C-c C-k") 'kill-buffer) ;TODO: this does not work !!!
   (add-hook 'kill-buffer-hook 'purple-chat-buffer-kill))
 
