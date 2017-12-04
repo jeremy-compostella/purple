@@ -68,7 +68,7 @@
 (defun purple-chat-set-field (chat field value)
   (if (eq field 'name)
       (progn (set-slot-value chat 'buddy (or (purple-buddy-find 'name value)
-                                             (plp-buddy 0 'id 0 'name value)))
+                                             (plp-buddy 'id 0 'name value)))
              (run-hook-with-args 'purple-chat-changed-hook chat 'buddy value))
     (set-slot-value chat field value)
     (run-hook-with-args 'purple-chat-changed-hook chat field value))
@@ -130,7 +130,7 @@
   (let* ((buddy (purple-buddy-find-by-name sender))
 	 (chat (purple-chat-find 'id id)))
     (when (not chat)			; Chat will be created in a minute
-      (setq chat (plp-chat id 'id 0))
+      (setq chat (plp-chat 'id 0))
       (add-to-list 'purple-chats chat t 'purple-chat-eq))
     (when (not buddy)
       (setq buddy (purple-buddy-create (purple-account-find 'id account) sender)))
