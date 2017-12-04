@@ -180,7 +180,10 @@ enabled."
 			 buddy-alias)
 		 'face (if received 'purple-chat-received-face 'purple-chat-wrote-face)
 		 purple-chat-buffer-properties)
-	  (apply 'propertize (purple-chat-wash-msg msg) purple-chat-buffer-properties)))
+	  (apply 'propertize (if received
+				 (purple-chat-wash-msg msg)
+			       (concat msg "\n"))
+		 purple-chat-buffer-properties)))
 
 (defun purple-chat-buffer-insert (chat from msg received)
   (with-current-buffer (purple-chat-buffer-find-or-create chat)
