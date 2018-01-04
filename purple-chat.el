@@ -177,6 +177,10 @@
       (tabulated-list-print)
       (pop-to-buffer (current-buffer)))))
 
+(defun purple-chat-kill-all ()
+  (interactive)
+  (mapc 'kill-buffer (purple-chat-buffers)))
+
 (defun purple-chat-propertize (chat)
   (let ((buddy (oref chat buddy))
 	(str (oref chat title)))
